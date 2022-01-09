@@ -9,6 +9,11 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <semaphore.h>
 
 #define MAX_BEAST_NUM 5
 #define MAX_PLAYER_NUM 4
@@ -48,5 +53,5 @@ struct server_t{
 };
 
 extern struct server_t server;
-
+extern sem_t player1_is_in;
 #endif

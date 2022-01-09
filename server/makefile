@@ -29,4 +29,4 @@ $(OBJ)/beast.o: $(SRC)/beast.c $(SRC)/beast.h
 .PHONY: clean
 
 clean:
-	-rm $(OBJ)/*.o server fifo
+	-rm $(OBJ)/*.o server
