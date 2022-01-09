@@ -3,12 +3,37 @@
 void server_shut_down(){
     endwin();
     sem_destroy(&player1_is_in);
-    
+    sem_destroy(&beast_start);
+    sem_destroy(&beast_end);
+    sem_destroy(&beast_finished);
 }
 
 void init_mutexes(){
     sem_init(&player1_is_in,0,0);
+    sem_init(&beast_start,0,0);
+    sem_init(&beast_end,0,0);
+    sem_init(&beast_finished,0,0);
 }
+
+void run_round(){
+    for(int i = 0;i<server.num_of_beasts;i++){
+        sem_post(&beast_start);
+    }
+    for(int i = 0;i<server.num_of_beasts;i++){
+        sem_wait(&beast_finished);
+    }
+
+    //DO CODE HERE
+    server.round++;
+
+
+    for(int i = 0;i<server.num_of_beasts;i++){
+        sem_post(&beast_end);
+    }
+}
+
+
+//PLAYERS FUNCTIONS
 
 void spawn_player(char character){
     int x, y;
@@ -29,7 +54,7 @@ void* wait_for_players(void* arg){
             exit(1);
         }
     }
-    //PLAYERS'S ACTIONS SENT TO SERVER
+    //PLAYER'S 1 ACTIONS SENT TO SERVER
     if(mkfifo("player1_moves_fifo",0777) == -1){
         if(errno != EEXIST){
             exit(1);

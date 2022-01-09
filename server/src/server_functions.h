@@ -5,6 +5,7 @@
 
 void server_shut_down();
 void init_mutexes();
+void run_round();
 
 //PLAYERS
 void* wait_for_players(void* arg);

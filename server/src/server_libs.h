@@ -53,5 +53,8 @@ struct server_t{
 };
 
 extern struct server_t server;
+extern sem_t beast_start;
+extern sem_t beast_end;
 extern sem_t player1_is_in;
+extern sem_t beast_finished;
 #endif

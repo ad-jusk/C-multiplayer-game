@@ -16,29 +16,58 @@ void beast_init(){
 
 void* beast_move(void* index){
     int i = *(int*)index;
-    beast_init();
     while(1){
+        sem_wait(&beast_start);      // WAIT FOR ROUND TO START
         make_a_move(i);
-        sleep(1);
+
+        sem_post(&beast_finished);   // POST THAT BEAST HAS FINISHED ITS MOVE
+        sem_wait(&beast_end);        // WAIT FOR ROUND TO END
     }
 }
 
 void make_a_move(int i){
     int x = server.beasts[i].x;
     int y = server.beasts[i].y;
+    char flag;
     int direction;
-    if(mvwinch(server.map,y+1,x) == ' '){
-        direction = 0;
-    }
-    else if(mvwinch(server.map,y-1,x) == ' '){
-        direction = 1;
-    }
-    else if(mvwinch(server.map,y,x+1) == ' '){
-        direction = 2;
-    }
-    else if(mvwinch(server.map,y,x-1) == ' '){
-        direction = 3;
-    }
+
+    do{
+        direction = rand() % 4;
+        if(direction == 0){
+            if(mvwinch(server.map,y+1,x) == (char)219){
+                flag = 1;
+            }
+            else{
+                flag = 0;
+            }
+        }
+        else if(direction == 1){
+            if(mvwinch(server.map,y-1,x) == (char)219){
+                flag = 1;            
+            }
+            else{
+                flag = 0;
+            }
+        }
+        else if(direction == 2){
+            if(mvwinch(server.map,y,x+1) == (char)219){
+                flag = 1;            
+            }
+            else{
+                flag = 0;
+            }
+        }
+        else if(direction == 3){
+            if(mvwinch(server.map,y,x-1) == (char)219){
+                flag = 1;            
+            }
+            else{
+                flag = 0;
+            }
+        }
+
+    }while(flag);
+    
     
     switch(direction){
         //MOVE DOWN

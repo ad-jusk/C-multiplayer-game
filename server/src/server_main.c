@@ -5,7 +5,9 @@
 
 struct server_t server;
 sem_t player1_is_in;
-
+sem_t beast_start;
+sem_t beast_end;
+sem_t beast_finished;
 
 int main(){
     
@@ -40,21 +42,24 @@ int main(){
     int input;
     int beast_indexes[5] = {0,1,2,3,4};
 
-    pthread_create(&beasts[server.num_of_beasts],NULL,beast_move,&beast_indexes[server.num_of_beasts]);
-    pthread_create(&players_wait,NULL,wait_for_players,NULL);
-    pthread_create(&player1,NULL,manage_player1,NULL);
+    beast_init();
+    pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]);
+    //pthread_create(&players_wait,NULL,wait_for_players,NULL);
+    //pthread_create(&player1,NULL,manage_player1,NULL);
 
     do{
         input = wgetch(server.map);
-        if(input == 'b'){
+        if(input == 'b' || input == 'B'){
             if(server.num_of_beasts == MAX_BEAST_NUM){
                 continue;
             }
-            pthread_create(&beasts[server.num_of_beasts],NULL,beast_move,&beast_indexes[server.num_of_beasts]);
+            beast_init();
+            pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]);
         }
+        run_round();
         set_current_server_status_and_map();
 
-    }while((char)input != 'q');
+    }while(input != 'q');
 
     server_shut_down();
 
