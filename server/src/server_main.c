@@ -5,9 +5,10 @@
 
 struct server_t server;
 sem_t player1_is_in;
-sem_t beast_start;
-sem_t beast_end;
+sem_t round_start;
+sem_t round_end;
 sem_t beast_finished;
+sem_t player1_finished;
 
 int main(){
     
@@ -44,8 +45,8 @@ int main(){
 
     beast_init();
     pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]);
-    //pthread_create(&players_wait,NULL,wait_for_players,NULL);
-    //pthread_create(&player1,NULL,manage_player1,NULL);
+    pthread_create(&players_wait,NULL,wait_for_players,NULL);
+    pthread_create(&player1,NULL,manage_player1,NULL);
 
     do{
         input = wgetch(server.map);

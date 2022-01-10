@@ -17,11 +17,12 @@ void beast_init(){
 void* beast_move(void* index){
     int i = *(int*)index;
     while(1){
-        sem_wait(&beast_start);      // WAIT FOR ROUND TO START
+        sem_wait(&round_start);      // WAIT FOR ROUND TO START
+        
         make_a_move(i);
 
         sem_post(&beast_finished);   // POST THAT BEAST HAS FINISHED ITS MOVE
-        sem_wait(&beast_end);        // WAIT FOR ROUND TO END
+        sem_wait(&round_end);        // WAIT FOR ROUND TO END
     }
 }
 

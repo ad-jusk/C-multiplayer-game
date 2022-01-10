@@ -32,6 +32,7 @@ struct player_t{
     int money_brought;
     int PID;
     char type[10];
+    char is_in;
 };
 
 struct beast_t{
@@ -53,8 +54,11 @@ struct server_t{
 };
 
 extern struct server_t server;
-extern sem_t beast_start;
-extern sem_t beast_end;
+extern sem_t round_start;
+extern sem_t round_end;
 extern sem_t player1_is_in;
+extern sem_t player1_finished;
 extern sem_t beast_finished;
+
+
 #endif

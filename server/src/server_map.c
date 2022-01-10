@@ -26,6 +26,7 @@ int start_server(){
         server.players[i].x = 0;
         server.players[i].y = 0;
         server.players[i].PID = 0;
+        server.players[i].is_in = 0;
         server.players[i].money_brought = 0;
         server.players[i].money_carried = 0;
         strcpy(server.players[i].type,"-----");
