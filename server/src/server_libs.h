@@ -32,6 +32,8 @@ struct player_t{
     int money_brought;
     int PID;
     char type[10];
+    char fifo_to_read[30];
+    char fifo_to_write[30];
     char is_in;
 };
 
