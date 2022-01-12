@@ -59,7 +59,13 @@ extern struct server_t server;
 extern sem_t round_start;
 extern sem_t round_end;
 extern sem_t player1_is_in;
+extern sem_t player2_is_in;
+extern sem_t player3_is_in;
+extern sem_t player4_is_in;
 extern sem_t player1_finished;
+extern sem_t player2_finished;
+extern sem_t player3_finished;
+extern sem_t player4_finished;
 extern sem_t beast_finished;
 
 

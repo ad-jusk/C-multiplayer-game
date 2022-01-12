@@ -5,10 +5,16 @@
 
 struct server_t server;
 sem_t player1_is_in;
+sem_t player2_is_in;
+sem_t player3_is_in;
+sem_t player4_is_in;
 sem_t round_start;
 sem_t round_end;
 sem_t beast_finished;
 sem_t player1_finished;
+sem_t player2_finished;
+sem_t player3_finished;
+sem_t player4_finished;
 
 int main(){
     
@@ -38,15 +44,19 @@ int main(){
     //THREADS
     pthread_t beasts[MAX_BEAST_NUM];
     pthread_t players_wait;
-    pthread_t player1;
+    pthread_t players[MAX_PLAYER_NUM];
 
     int input;
+    int player_indexes[4] = {0,1,2,3};
     int beast_indexes[5] = {0,1,2,3,4};
 
     beast_init();
     pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]);
     pthread_create(&players_wait,NULL,wait_for_players,NULL);
-    pthread_create(&player1,NULL,manage_player1,NULL);
+    pthread_create(&players[0],NULL,manage_player1,&player_indexes[0]);
+    pthread_create(&players[1],NULL,manage_player2,&player_indexes[1]);
+    pthread_create(&players[2],NULL,manage_player3,&player_indexes[2]);
+    pthread_create(&players[3],NULL,manage_player4,&player_indexes[3]);
 
     do{
         input = wgetch(server.map);
