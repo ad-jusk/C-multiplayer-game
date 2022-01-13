@@ -29,11 +29,15 @@ int main(){
 
     do{
         move = wgetch(player.map);
+        if(move == 'q' || move == 'Q'){
+            send_move(&move);
+            break;
+        }
         send_move(&move);
         player.round++;
         get_map_data();
         set_current_map_data();
-    }while(move != 'q');
+    }while(1);
 
     endwin();
     

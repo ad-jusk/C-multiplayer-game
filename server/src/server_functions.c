@@ -15,7 +15,7 @@ void server_shut_down(){
     sem_destroy(&player4_finished);
 }
 
-void init_mutexes(){
+void init_semaphores(){
     sem_init(&player1_is_in,0,0);
     sem_init(&player2_is_in,0,0);
     sem_init(&player3_is_in,0,0);
@@ -72,17 +72,35 @@ void run_round(){
 void spawn_player(char character){
     int x, y;
     do{
-        x = rand() % (MAP_WIDTH - 1);
+        x = rand() % (MAP_WIDTH - 2);
         y = rand() % MAP_HEIGHT;
     }while(mvwinch(server.map,y,x) == (char)219);
     server.players[server.num_of_players].x = x;
     server.players[server.num_of_players].y = y;
+    server.players[server.num_of_players].spawn_x = x;
+    server.players[server.num_of_players].spawn_y = y;
     server.players[server.num_of_players].is_in = 1;
     server.players[server.num_of_players].money_brought = 0;
     server.players[server.num_of_players].money_carried = 0;
     server.players[server.num_of_players].deaths = 0;
     server.num_of_players++;
     mvwaddch(server.map,y,x,character);
+}
+
+void clear_player_stats(int index){
+    struct player_t* player = &server.players[index];
+    mvwaddch(server.map,player->y,player->x,' ');
+    player->deaths = 0;
+    player->is_in = 0;
+    player->money_brought = 0;
+    player->money_carried = 0;
+    player->PID = 0;
+    player->x = 0;
+    player->y = 0;
+    player->spawn_x = 0;
+    player->spawn_y = 0;
+    server.num_of_players--;
+    strcpy(player->type,"-----");
 }
 
 void* wait_for_players(void* arg){
@@ -245,8 +263,12 @@ void* manage_player1(void* arg){
         sem_wait(&round_start);
         //MOVE PLAYER
         read_player_move(0,&move);
+        if(move == 'q' || move == 'Q'){
+            clear_player_stats(0);
+            sem_post(&player1_finished);
+            break;
+        }
         move_player(&move,index,x);
-
         sem_post(&player1_finished);
         sem_wait(&round_end);
 
@@ -274,8 +296,12 @@ void* manage_player2(void* arg){
        
         //MOVE PLAYER
         read_player_move(index,&move);
+        if(move == 'q' || move == 'Q'){
+            clear_player_stats(1);
+            sem_post(&player2_finished);
+            break;
+        }
         move_player(&move,index,x);
-
         sem_post(&player2_finished);
         sem_wait(&round_end);
         //SEND MAP
@@ -303,6 +329,11 @@ void* manage_player3(void* arg){
        
         //MOVE PLAYER
         read_player_move(index,&move);
+        if(move == 'q' || move == 'Q'){
+            clear_player_stats(2);
+            sem_post(&player3_finished);
+            break;
+        }
         move_player(&move,index,x);
 
         sem_post(&player3_finished);
@@ -333,6 +364,11 @@ void* manage_player4(void* arg){
        
         //MOVE PLAYER
         read_player_move(index,&move);
+        if(move == 'q' || move == 'Q'){
+            clear_player_stats(3);
+            sem_post(&player4_finished);
+            break;
+        }
         move_player(&move,index,x);
 
         sem_post(&player4_finished);

@@ -4,12 +4,13 @@
 #include "server_libs.h"
 
 void server_shut_down();
-void init_mutexes();
+void init_semaphores();
 void run_round();
 
 //PLAYERS
 void* wait_for_players(void* arg);
 void spawn_player(char character);
+void clear_player_stats(int index);
 void* manage_player1(void* arg);
 void* manage_player2(void* arg);
 void* manage_player3(void* arg);

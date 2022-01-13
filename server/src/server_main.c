@@ -38,8 +38,8 @@ int main(){
         return 1;
     }
 
-    //INIT_MUTEXES
-    init_mutexes();
+    //INIT SEMAPHORES
+    init_semaphores();
 
     //THREADS
     pthread_t beasts[MAX_BEAST_NUM];
