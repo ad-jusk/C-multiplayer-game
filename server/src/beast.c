@@ -74,25 +74,21 @@ void make_a_move(int i){
         //MOVE DOWN
         case 0:
             mvwaddch(server.map,y,x,' ');
-            mvwaddch(server.map,y+1,x,'*');
             server.beasts[i].y++;
             break;
         //MOVE UP
         case 1:
             mvwaddch(server.map,y,x,' ');
-            mvwaddch(server.map,y-1,x,'*');
             server.beasts[i].y--;
             break;
         case 2:
          //MOVE RIGHT
             mvwaddch(server.map,y,x,' ');
-            mvwaddch(server.map,y,x+1,'*');
             server.beasts[i].x++;
             break;
         case 3:
         //MOVE LEFT
             mvwaddch(server.map,y,x,' ');
-            mvwaddch(server.map,y,x-1,'*');
             server.beasts[i].x--;
             break;
     }

@@ -40,12 +40,10 @@ void run_round(){
     }
     if(server.players[0].is_in){
         //WAIT FOR PLAYER 1 TO FINISH
-        //sem_post(&round_start);
         sem_wait(&player1_finished);
     }
     if(server.players[1].is_in){
         //WAIT FOR PLAYER 2 TO FINISH
-        //sem_post(&round_start);
         sem_wait(&player2_finished);
     }
     if(server.players[2].is_in){
@@ -60,6 +58,12 @@ void run_round(){
 
     //DO CODE REGRDING SINGLE ROUND HERE
     server.round++;
+    collect_money();
+    deposit_money();
+
+    //AFTER SERVER'S APPROVAL DISPLAY PLAYERS AND BEASTS
+    display_beasts();
+    display_players();
 
     for(int i = 0;i<server.num_of_beasts + server.num_of_players;i++){
         sem_post(&round_end);
@@ -74,7 +78,7 @@ void spawn_player(char character){
     do{
         x = rand() % (MAP_WIDTH - 2);
         y = rand() % MAP_HEIGHT;
-    }while(mvwinch(server.map,y,x) == (char)219);
+    }while(mvwinch(server.map,y,x) != ' ');
     server.players[server.num_of_players].x = x;
     server.players[server.num_of_players].y = y;
     server.players[server.num_of_players].spawn_x = x;
@@ -83,6 +87,8 @@ void spawn_player(char character){
     server.players[server.num_of_players].money_brought = 0;
     server.players[server.num_of_players].money_carried = 0;
     server.players[server.num_of_players].deaths = 0;
+    server.players[server.num_of_players].char_to_display = ' ';
+    server.players[server.num_of_players].on_bush = 0;
     server.num_of_players++;
     mvwaddch(server.map,y,x,character);
 }
@@ -256,7 +262,7 @@ void* manage_player1(void* arg){
     close(fd);
 
     int move;
-    char x = (index+1) + '0';
+    int flag = 0;
     //SEND SPAWN MAP
     send_map_data_to_player(index);
     while(1){
@@ -268,7 +274,17 @@ void* manage_player1(void* arg){
             sem_post(&player1_finished);
             break;
         }
-        move_player(&move,index,x);
+        if(server.players[index].on_bush == 1){
+            move = 'b';
+            flag = 1;
+        }
+        move_player(&move,index);
+        check_if_bush(index);
+        if(flag == 1 && move != -1){
+            flag = 0;
+            server.players[index].on_bush = 0;
+            server.players[index].char_to_display = '#';
+        }
         sem_post(&player1_finished);
         sem_wait(&round_end);
 
@@ -288,7 +304,7 @@ void* manage_player2(void* arg){
     close(fd);
 
     int move;
-    char x = (index+1) + '0';
+    int flag = 0;
     //SEND SPAWN MAP
     send_map_data_to_player(index);
     while(1){
@@ -301,7 +317,17 @@ void* manage_player2(void* arg){
             sem_post(&player2_finished);
             break;
         }
-        move_player(&move,index,x);
+        if(server.players[index].on_bush == 1){
+            move = 'b';
+            flag = 1;
+        }
+        move_player(&move,index);
+        check_if_bush(index);
+        if(flag == 1 && move != -1){
+            flag = 0;
+            server.players[index].on_bush = 0;
+            server.players[index].char_to_display = '#';
+        }
         sem_post(&player2_finished);
         sem_wait(&round_end);
         //SEND MAP
@@ -321,7 +347,7 @@ void* manage_player3(void* arg){
     close(fd);
 
     int move;
-    char x = (index+1) + '0';
+    int flag = 0;
     //SEND SPAWN MAP
     send_map_data_to_player(index);
     while(1){
@@ -334,7 +360,17 @@ void* manage_player3(void* arg){
             sem_post(&player3_finished);
             break;
         }
-        move_player(&move,index,x);
+        if(server.players[index].on_bush == 1){
+            move = 'b';
+            flag = 1;
+        }
+        move_player(&move,index);
+        check_if_bush(index);
+        if(flag == 1 && move != -1){
+            flag = 0;
+            server.players[index].on_bush = 0;
+            server.players[index].char_to_display = '#';
+        }
 
         sem_post(&player3_finished);
         sem_wait(&round_end);
@@ -356,7 +392,7 @@ void* manage_player4(void* arg){
     close(fd);
 
     int move;
-    char x = (index+1) + '0';
+    int flag = 0;
     //SEND SPAWN MAP
     send_map_data_to_player(index);
     while(1){
@@ -369,7 +405,17 @@ void* manage_player4(void* arg){
             sem_post(&player4_finished);
             break;
         }
-        move_player(&move,index,x);
+        if(server.players[index].on_bush == 1){
+            move = 'b';
+            flag = 1;
+        }
+        move_player(&move,index);
+        check_if_bush(index);
+        if(flag == 1 && move != -1){
+            flag = 0;
+            server.players[index].on_bush = 0;
+            server.players[index].char_to_display = '#';
+        }
 
         sem_post(&player4_finished);
         sem_wait(&round_end);
@@ -442,41 +488,46 @@ void send_map_data_to_player(int index){
 
 
 
-void move_player(int* move, int index, char character){
+void move_player(int* move, int index){
+    if(server.players[index].x == CAMP_X && server.players[index].y == CAMP_Y){
+        server.players[index].char_to_display = 'A';
+    }
     switch(*move){
         case KEY_UP:
             if(mvwinch(server.map,server.players[index].y-1,server.players[index].x) == (char)219){
                 break;
             }
-            mvwaddch(server.map,server.players[index].y,server.players[index].x,' ');
-            mvwaddch(server.map,server.players[index].y-1,server.players[index].x,character);
+            mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
             server.players[index].y--;
             break;
         case KEY_DOWN:
             if(mvwinch(server.map,server.players[index].y+1,server.players[index].x) == (char)219){
                 break;
             }
-            mvwaddch(server.map,server.players[index].y,server.players[index].x,' ');
-            mvwaddch(server.map,server.players[index].y+1,server.players[index].x,character);
+            mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
             server.players[index].y++;
             break;
         case KEY_LEFT:
             if(mvwinch(server.map,server.players[index].y,server.players[index].x-1) == (char)219){
                 break;
             }
-            mvwaddch(server.map,server.players[index].y,server.players[index].x,' ');
-            mvwaddch(server.map,server.players[index].y,server.players[index].x-1,character);
+            mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
             server.players[index].x--;
             break;
         case KEY_RIGHT:
             if(mvwinch(server.map,server.players[index].y,server.players[index].x+1) == (char)219){
                 break;
             }
-            mvwaddch(server.map,server.players[index].y,server.players[index].x,' ');
-            mvwaddch(server.map,server.players[index].y,server.players[index].x+1,character);
+            mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
             server.players[index].x++;
             break;
         default:
             break;
+    }
+    if(server.players[index].char_to_display == '#' && *move != -1){
+        server.players[index].char_to_display = ' ';
+    }
+    else if(server.players[index].char_to_display == 'A' && *move != -1){
+        server.players[index].char_to_display = ' ';
     }
 }

@@ -37,6 +37,12 @@ int main(){
         endwin();
         return 1;
     }
+    //SET COLLECTIBLES
+    set_collectibles(COINS_AMOUNT,TREASURES_AMOUNT,LARGE_TREASURES_AMOUNT);
+    //SET CAMP
+    set_camp();
+    //SET BUSHES
+    set_bushes();
 
     //INIT SEMAPHORES
     init_semaphores();

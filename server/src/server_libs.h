@@ -22,6 +22,14 @@
 #define STATUS_BAR_HEIGHT 15
 #define STATUS_BAR_WIDTH 48
 
+#define COINS_AMOUNT 5
+#define TREASURES_AMOUNT 5
+#define LARGE_TREASURES_AMOUNT 5
+#define BUSHES_AMOUNT 10
+
+#define CAMP_X 24
+#define CAMP_Y 12
+
 struct player_t{
     int x;
     int y;
@@ -35,6 +43,8 @@ struct player_t{
     char fifo_to_read[30];
     char fifo_to_write[30];
     char is_in;
+    char char_to_display;
+    char on_bush;
 };
 
 struct beast_t{
@@ -46,8 +56,6 @@ struct server_t{
     int num_of_beasts;
     int num_of_players;
     int PID;
-    int camp_x;
-    int camp_y;
     int round;
     struct player_t players[MAX_PLAYER_NUM];
     struct beast_t beasts[MAX_BEAST_NUM];
