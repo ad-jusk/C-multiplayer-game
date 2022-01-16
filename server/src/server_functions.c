@@ -60,6 +60,7 @@ void run_round(){
     server.round++;
     collect_money();
     deposit_money();
+    beast_kill_player();
 
     //AFTER SERVER'S APPROVAL DISPLAY PLAYERS AND BEASTS
     display_beasts();
@@ -98,6 +99,7 @@ void clear_player_stats(int index){
     mvwaddch(server.map,player->y,player->x,' ');
     player->deaths = 0;
     player->is_in = 0;
+    server.num_of_players--;
     player->money_brought = 0;
     player->money_carried = 0;
     player->PID = 0;
@@ -105,8 +107,20 @@ void clear_player_stats(int index){
     player->y = 0;
     player->spawn_x = 0;
     player->spawn_y = 0;
-    server.num_of_players--;
     strcpy(player->type,"-----");
+}
+
+void beast_kill_player(){
+    for(int i = 0;i<server.num_of_beasts;i++){
+        for(int j = 0;j<server.num_of_players;j++){
+            if(server.beasts[i].x == server.players[j].x && server.beasts[i].y == server.players[j].y){
+                server.players[j].x = server.players[j].spawn_x;
+                server.players[j].y = server.players[j].spawn_y;
+                server.players[j].money_carried = 0;
+                server.players[j].deaths++;
+            }
+        }
+    }
 }
 
 void* wait_for_players(void* arg){

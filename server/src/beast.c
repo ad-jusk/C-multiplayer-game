@@ -10,6 +10,7 @@ void beast_init(){
     }while(mvwinch(server.map,y,x) == (char)219);
     server.beasts[server.num_of_beasts].x = x;
     server.beasts[server.num_of_beasts].y = y;
+    server.beasts[server.num_of_beasts].char_to_display = ' ';
     server.num_of_beasts++;
     mvwaddch(server.map,y,x,'*');
 }
@@ -31,65 +32,121 @@ void make_a_move(int i){
     int y = server.beasts[i].y;
     char flag;
     int direction;
-
-    do{
-        direction = rand() % 4;
-        if(direction == 0){
-            if(mvwinch(server.map,y+1,x) == (char)219){
-                flag = 1;
-            }
-            else{
-                flag = 0;
-            }
-        }
-        else if(direction == 1){
-            if(mvwinch(server.map,y-1,x) == (char)219){
-                flag = 1;            
-            }
-            else{
-                flag = 0;
-            }
-        }
-        else if(direction == 2){
-            if(mvwinch(server.map,y,x+1) == (char)219){
-                flag = 1;            
-            }
-            else{
-                flag = 0;
-            }
-        }
-        else if(direction == 3){
-            if(mvwinch(server.map,y,x-1) == (char)219){
-                flag = 1;            
-            }
-            else{
-                flag = 0;
-            }
-        }
-
-    }while(flag);
     
-    
+    if(search_for_player(i,&direction)){
+        do{
+            direction = rand() % 4;
+            if(direction == 0){
+                if(mvwinch(server.map,y+1,x) == (char)219){
+                    flag = 1;
+                }
+                else{
+                    flag = 0;
+                }
+            }
+            else if(direction == 1){
+                if(mvwinch(server.map,y-1,x) == (char)219){
+                    flag = 1;            
+                }
+                else{
+                    flag = 0;
+                }
+            }
+            else if(direction == 2){
+                if(mvwinch(server.map,y,x+1) == (char)219){
+                    flag = 1;            
+                }
+                else{
+                    flag = 0;
+                }
+            }
+            else if(direction == 3){
+                if(mvwinch(server.map,y,x-1) == (char)219){
+                    flag = 1;            
+                }
+                else{
+                    flag = 0;
+                }
+            }
+
+        }while(flag);
+    }
+
     switch(direction){
         //MOVE DOWN
         case 0:
-            mvwaddch(server.map,y,x,' ');
+            mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
             server.beasts[i].y++;
             break;
         //MOVE UP
         case 1:
-            mvwaddch(server.map,y,x,' ');
+            mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
             server.beasts[i].y--;
             break;
         case 2:
          //MOVE RIGHT
-            mvwaddch(server.map,y,x,' ');
+            mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
             server.beasts[i].x++;
             break;
         case 3:
         //MOVE LEFT
-            mvwaddch(server.map,y,x,' ');
+            mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
             server.beasts[i].x--;
             break;
     }
+    char temp = mvwinch(server.map,server.beasts[i].y,server.beasts[i].x);
+    if(isalpha(temp) || temp == '#'){
+        server.beasts[i].char_to_display = temp;
+    }
+    else if(isdigit(temp) && temp != 'D'){
+        server.beasts[i].char_to_display = 'D';
+    }
+    else{
+        server.beasts[i].char_to_display = ' ';
+    }
+}
+
+int search_for_player(int index, int* direction){
+    int x = server.beasts[index].x;
+    int y = server.beasts[index].y;
+    int start_x = x - 2;
+    int start_y = y - 2;
+    int end_x = x + 2;
+    int end_y = y + 2;
+    if(start_x < 1)
+        start_x = 1;
+    if(start_y < 1)
+        start_y = 1;
+    if(end_x > MAP_WIDTH - 2)
+        end_x = MAP_WIDTH - 2;
+    if(end_y > MAP_HEIGHT - 2)
+        end_y = MAP_HEIGHT - 2;
+    for(int i = start_y;i<=end_y;i++){
+        for(int j = start_x;j<=end_x;j++){
+            if(mvwinch(server.map,i,j) == '1' || mvwinch(server.map,i,j) == '2' || mvwinch(server.map,i,j) == '3' || mvwinch(server.map,i,j) == '4'){
+                if(y == i && j < x && mvwinch(server.map,i,j+1) != (char)219){
+                    //MOVE LEFT
+                    *direction = 3;
+                    return 0;
+                }
+                if(y == i && j > x && mvwinch(server.map,i,j-1) != (char)219){
+                    //MOVE RIGHT
+                    *direction = 2;
+                    return 0;
+                }
+                if(x == j && i > y && mvwinch(server.map,i-1,j) != (char)219){
+                    //MOVE UP
+                    *direction = 0;
+                    return 0;
+                }
+                if(x == j && i < y && mvwinch(server.map,i+1,j) != (char)219){
+                    //MOVE DOWN
+                    *direction = 1;
+                    return 0;
+                }
+
+            }
+        }
+    }
+    return 1;
 }

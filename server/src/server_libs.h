@@ -50,6 +50,7 @@ struct player_t{
 struct beast_t{
     int x;
     int y;
+    char char_to_display;
 };
 
 struct server_t{
