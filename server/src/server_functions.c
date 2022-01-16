@@ -61,6 +61,7 @@ void run_round(){
     collect_money();
     deposit_money();
     beast_kill_player();
+    check_if_collission();
 
     //AFTER SERVER'S APPROVAL DISPLAY PLAYERS AND BEASTS
     display_beasts();
@@ -91,7 +92,7 @@ void spawn_player(char character){
     server.players[server.num_of_players].char_to_display = ' ';
     server.players[server.num_of_players].on_bush = 0;
     server.num_of_players++;
-    mvwaddch(server.map,y,x,character);
+    mvwaddch(server.map,y,x,character | COLOR_PAIR(PLAYER_PAIR));
 }
 
 void clear_player_stats(int index){
@@ -114,6 +115,7 @@ void beast_kill_player(){
     for(int i = 0;i<server.num_of_beasts;i++){
         for(int j = 0;j<server.num_of_players;j++){
             if(server.beasts[i].x == server.players[j].x && server.beasts[i].y == server.players[j].y){
+                set_death_point(j);
                 server.players[j].x = server.players[j].spawn_x;
                 server.players[j].y = server.players[j].spawn_y;
                 server.players[j].money_carried = 0;
@@ -511,28 +513,40 @@ void move_player(int* move, int index){
             if(mvwinch(server.map,server.players[index].y-1,server.players[index].x) == (char)219){
                 break;
             }
-            mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
+            if(server.players[index].char_to_display == 'A')
+                mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display | COLOR_PAIR(CAMP_PAIR));
+            else
+                mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
             server.players[index].y--;
             break;
         case KEY_DOWN:
             if(mvwinch(server.map,server.players[index].y+1,server.players[index].x) == (char)219){
                 break;
             }
-            mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
+            if(server.players[index].char_to_display == 'A')
+                mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display | COLOR_PAIR(CAMP_PAIR));
+            else
+                mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
             server.players[index].y++;
             break;
         case KEY_LEFT:
             if(mvwinch(server.map,server.players[index].y,server.players[index].x-1) == (char)219){
                 break;
             }
-            mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
+            if(server.players[index].char_to_display == 'A')
+                mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display | COLOR_PAIR(CAMP_PAIR));
+            else
+                mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
             server.players[index].x--;
             break;
         case KEY_RIGHT:
             if(mvwinch(server.map,server.players[index].y,server.players[index].x+1) == (char)219){
                 break;
             }
-            mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
+            if(server.players[index].char_to_display == 'A')
+                mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display | COLOR_PAIR(CAMP_PAIR));
+            else
+                mvwaddch(server.map,server.players[index].y,server.players[index].x,server.players[index].char_to_display);
             server.players[index].x++;
             break;
         default:
@@ -542,6 +556,9 @@ void move_player(int* move, int index){
         server.players[index].char_to_display = ' ';
     }
     else if(server.players[index].char_to_display == 'A' && *move != -1){
+        server.players[index].char_to_display = ' ';
+    }
+    else if(isdigit(server.players[index].char_to_display)){
         server.players[index].char_to_display = ' ';
     }
 }

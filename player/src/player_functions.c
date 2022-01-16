@@ -24,7 +24,22 @@ void get_map_data(){
     for(int i = 0;i<5;i++){
         for(int j = 0;j<5;j++){
             read(fd,&temp,sizeof(char));
-            mvwaddch(player.map,i,j,temp);
+            if(temp == 'A'){
+                mvwaddch(player.map,i,j,temp | COLOR_PAIR(CAMP_PAIR));
+                player.is_camp_discovered = 1;  
+            }
+            else if(isalpha(temp)){
+                mvwaddch(player.map,i,j,temp | COLOR_PAIR(TREASURE_PAIR)); 
+            }
+            else if(isdigit(temp)){
+                mvwaddch(player.map,i,j,temp | COLOR_PAIR(PLAYER_PAIR));
+            }
+            else if(temp == '*'){
+                mvwaddch(player.map,i,j,temp | COLOR_PAIR(BEAST_PAIR)); 
+            }
+            else{
+                mvwaddch(player.map,i,j,temp); 
+            }
         }
     }
     read(fd,&player.x,sizeof(int));
@@ -49,16 +64,31 @@ void send_PID(){
 }
 
 void set_current_map_data(){
-    wrefresh(player.map);
-    mvwprintw(player.stats,2,2,"Campsite X/Y: unknown");
+    if(player.is_camp_discovered == 0){
+        mvwprintw(player.stats,2,2,"Campsite Y/X: unknown");
+    }
+    else{
+        mvwprintw(player.stats,2,2,"Campsite Y/X: %02d/%02d   ",CAMP_Y,CAMP_X);
+    }
     mvwprintw(player.stats,3,2,"Round: %d",player.round);
     mvwprintw(player.stats,5,1,"Player:");
     mvwprintw(player.stats,6,2,"Number: %d",player.index);
     mvwprintw(player.stats,7,2,"Type: HUMAN");
     mvwprintw(player.stats,8,2,"Curr Y/X: %02d/%02d",player.y,player.x);
     mvwprintw(player.stats,9,2,"Deaths: %d",player.deaths);
+    wmove(player.stats,11,0);
+    wclrtoeol(player.stats);
+    box(player.stats,0,0);
     mvwprintw(player.stats,11,2,"Coins found: %d",player.money_carried);
     mvwprintw(player.stats,12,2,"Coins brought: %d",player.money_brought);
+    wrefresh(player.map);
     wrefresh(player.stats);
     
+}
+
+void init_colors(){
+    init_pair(BEAST_PAIR,COLOR_RED,-1);
+    init_pair(PLAYER_PAIR,COLOR_MAGENTA,-1);
+    init_pair(TREASURE_PAIR,COLOR_YELLOW,-1);
+    init_pair(CAMP_PAIR,COLOR_CYAN,-1);
 }

@@ -30,6 +30,11 @@
 #define CAMP_X 24
 #define CAMP_Y 12
 
+#define BEAST_PAIR 1
+#define PLAYER_PAIR 2
+#define TREASURE_PAIR 3
+#define CAMP_PAIR 4
+
 struct player_t{
     int x;
     int y;
@@ -53,6 +58,12 @@ struct beast_t{
     char char_to_display;
 };
 
+struct death_point_t{
+    int x;
+    int y;
+    int money;
+};
+
 struct server_t{
     int num_of_beasts;
     int num_of_players;
@@ -60,8 +71,10 @@ struct server_t{
     int round;
     struct player_t players[MAX_PLAYER_NUM];
     struct beast_t beasts[MAX_BEAST_NUM];
+    struct death_point_t death_points[MAX_PLAYER_NUM];
     WINDOW* map;
     WINDOW* status;
+    WINDOW* commands;
 };
 
 extern struct server_t server;

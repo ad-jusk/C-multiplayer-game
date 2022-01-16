@@ -23,20 +23,29 @@ int main(){
     curs_set(0);
     halfdelay(10);
     noecho();
+    start_color();
+    use_default_colors();
 
     //SERVER MAP
-    server.map = newwin(MAP_HEIGHT,MAP_WIDTH,0,0);
+    server.map = newwin(MAP_HEIGHT,MAP_WIDTH,1,1);
     keypad(server.map,1);
 
     //SERVER STATUS
-    server.status = newwin(STATUS_BAR_HEIGHT,STATUS_BAR_WIDTH,0,MAP_WIDTH+2);
+    server.status = newwin(STATUS_BAR_HEIGHT,STATUS_BAR_WIDTH,1,MAP_WIDTH+2);
     box(server.status,0,0);
+    //SERVER COMMANDS
+    server.commands = newwin(8,29,STATUS_BAR_HEIGHT+1,MAP_WIDTH+2);
+    box(server.commands,0,0);
+    fill_command_window();
+    //SET COLOR PAIRS
+    init_colors();
 
     //START_SERVER
     if(start_server()){
         endwin();
         return 1;
     }
+
     //SET COLLECTIBLES
     set_collectibles(COINS_AMOUNT,TREASURES_AMOUNT,LARGE_TREASURES_AMOUNT);
     //SET CAMP
@@ -72,6 +81,15 @@ int main(){
             }
             beast_init();
             pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]);
+        }
+        else if(input == 'c'){
+            set_collectibles(1,0,0);
+        }
+        else if(input == 't'){
+            set_collectibles(0,1,0);
+        }
+        else if(input == 'T'){
+            set_collectibles(0,0,1);
         }
         run_round();
         set_current_server_status_and_map();

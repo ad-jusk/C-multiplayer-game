@@ -14,6 +14,13 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#define CAMP_X 24
+#define CAMP_Y 12
+
+#define BEAST_PAIR 1
+#define PLAYER_PAIR 2
+#define TREASURE_PAIR 3
+#define CAMP_PAIR 4
 
 struct player_t{
     int x;
@@ -38,6 +45,7 @@ void get_map_data();
 void send_move(int* move);
 void send_PID();
 void set_current_map_data();
+void init_colors();
 
 extern struct player_t player;
 

@@ -8,17 +8,21 @@ int main(){
     halfdelay(10);
     noecho();
     curs_set(0);
+    start_color();
+    use_default_colors();
+
+    //CONNECT
+    connect_to_server();
     
-    player.map = newwin(5,5,2,1);
+    player.map = newwin(5,5,2,2);
     player.stats = newwin(14,30,2,10);
     box(player.stats,0,0);
     keypad(player.map,1);
     refresh();
 
-    int move;
+    //SET COLOR PAIRS
+    init_colors();
 
-    //CONNECT
-    connect_to_server();
     mvwprintw(player.stats,1,1,"Server's PID: %d",player.server_PID);
     //SEND PLAYER'S PID TO SERVER
     send_PID();
@@ -26,6 +30,8 @@ int main(){
     //GET AND SET SPAWN MAP
     get_map_data();
     set_current_map_data();
+
+    int move;
 
     do{
         move = wgetch(player.map);

@@ -75,22 +75,54 @@ void make_a_move(int i){
     switch(direction){
         //MOVE DOWN
         case 0:
-            mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
+            if(isalpha(server.beasts[i].char_to_display)){
+                if(server.beasts[i].char_to_display == 'A')
+                    mvwaddch(server.map,y,x,server.beasts[i].char_to_display | COLOR_PAIR(CAMP_PAIR));
+                else
+                    mvwaddch(server.map,y,x,server.beasts[i].char_to_display | COLOR_PAIR(TREASURE_PAIR));
+            }
+            else{
+                mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
+            }
             server.beasts[i].y++;
             break;
         //MOVE UP
         case 1:
-            mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
+            if(isalpha(server.beasts[i].char_to_display)){
+                if(server.beasts[i].char_to_display == 'A')
+                    mvwaddch(server.map,y,x,server.beasts[i].char_to_display | COLOR_PAIR(CAMP_PAIR));
+                else
+                    mvwaddch(server.map,y,x,server.beasts[i].char_to_display | COLOR_PAIR(TREASURE_PAIR));
+            }
+            else{
+                mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
+            }
             server.beasts[i].y--;
             break;
         case 2:
          //MOVE RIGHT
-            mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
+            if(isalpha(server.beasts[i].char_to_display)){
+                if(server.beasts[i].char_to_display == 'A')
+                    mvwaddch(server.map,y,x,server.beasts[i].char_to_display | COLOR_PAIR(CAMP_PAIR));
+                else
+                    mvwaddch(server.map,y,x,server.beasts[i].char_to_display | COLOR_PAIR(TREASURE_PAIR));
+            }
+            else{
+                mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
+            }
             server.beasts[i].x++;
             break;
         case 3:
         //MOVE LEFT
-            mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
+            if(isalpha(server.beasts[i].char_to_display)){
+                if(server.beasts[i].char_to_display == 'A')
+                    mvwaddch(server.map,y,x,server.beasts[i].char_to_display | COLOR_PAIR(CAMP_PAIR));
+                else
+                    mvwaddch(server.map,y,x,server.beasts[i].char_to_display | COLOR_PAIR(TREASURE_PAIR));
+            }
+            else{
+                mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
+            }
             server.beasts[i].x--;
             break;
     }
@@ -117,8 +149,8 @@ int search_for_player(int index, int* direction){
         start_x = 1;
     if(start_y < 1)
         start_y = 1;
-    if(end_x > MAP_WIDTH - 2)
-        end_x = MAP_WIDTH - 2;
+    if(end_x > MAP_WIDTH - 3)
+        end_x = MAP_WIDTH - 3;
     if(end_y > MAP_HEIGHT - 2)
         end_y = MAP_HEIGHT - 2;
     for(int i = start_y;i<=end_y;i++){

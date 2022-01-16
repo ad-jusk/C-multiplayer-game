@@ -28,12 +28,23 @@ int start_server(){
         server.players[i].money_brought = 0;
         server.players[i].money_carried = 0;
         strcpy(server.players[i].type,"-----");
+        //DEATH POINTS
+        server.death_points[i].x = 0;
+        server.death_points[i].y = 0;
+        server.death_points[i].money = 0;
     }
     if(load_map()){
         return 1;
     }
     set_current_server_status_and_map();
     return 0;
+}
+
+void init_colors(){
+    init_pair(BEAST_PAIR,COLOR_RED,-1);
+    init_pair(PLAYER_PAIR,COLOR_MAGENTA,-1);
+    init_pair(TREASURE_PAIR,COLOR_YELLOW,-1);
+    init_pair(CAMP_PAIR,COLOR_CYAN,-1);
 }
 
 void set_current_server_status_and_map(){
@@ -63,6 +74,7 @@ void set_current_server_status_and_map(){
         if(server.players[i].x == CAMP_X && server.players[i].y == CAMP_Y){
             wmove(server.status,12,0);
             wclrtoeol(server.status);
+            mvwprintw(server.status,12,3,"carried:");
             box(server.status,0,0);
         }
         mvwprintw(server.status,12,12+9*i,"%7d",server.players[i].money_carried);
@@ -73,16 +85,27 @@ void set_current_server_status_and_map(){
     wrefresh(server.status);
 }
 
+void fill_command_window(){
+    mvwprintw(server.commands,1,1,"Available commands:");
+    mvwprintw(server.commands,2,1,"b/B - add one beast");
+    mvwprintw(server.commands,3,1,"c - add one coin");
+    mvwprintw(server.commands,4,1,"t - add one treasure");
+    mvwprintw(server.commands,5,1,"T - add one large treasure");
+    mvwprintw(server.commands,6,1,"q/Q - shut down server");
+    wrefresh(server.commands);
+}
 
 void display_players(){
     for(int i = 0;i<server.num_of_players;i++){
-        mvwaddch(server.map,server.players[i].y,server.players[i].x,(i+1) + '0');
+        if(server.players[i].x != 0 && server.players[i].y != 0){
+            mvwaddch(server.map,server.players[i].y,server.players[i].x,((i+1) + '0')  | COLOR_PAIR(PLAYER_PAIR));
+        }
     }
 }
 
 void display_beasts(){
     for(int i = 0;i<server.num_of_beasts;i++){
-        mvwaddch(server.map,server.beasts[i].y,server.beasts[i].x,'*');
+        mvwaddch(server.map,server.beasts[i].y,server.beasts[i].x,'*' | COLOR_PAIR(BEAST_PAIR));
     }
 }
 
@@ -94,7 +117,7 @@ void set_collectibles(int num_of_coins, int num_of_treasures, int num_of_large_t
             x = rand() % (MAP_WIDTH - 2);
             y = rand() % MAP_HEIGHT;
         }while(mvwinch(server.map,y,x) == (char)219);
-        mvwaddch(server.map,y,x,'c');
+        mvwaddch(server.map,y,x,'c' | COLOR_PAIR(TREASURE_PAIR));
     }
     //SET TREASURES
     for(int i = 0;i<num_of_treasures;i++){
@@ -102,7 +125,7 @@ void set_collectibles(int num_of_coins, int num_of_treasures, int num_of_large_t
             x = rand() % (MAP_WIDTH - 2);
             y = rand() % MAP_HEIGHT;
         }while(mvwinch(server.map,y,x) == (char)219);
-        mvwaddch(server.map,y,x,'t');
+        mvwaddch(server.map,y,x,'t' | COLOR_PAIR(TREASURE_PAIR));
     }
     //SET LARGE TREASURES
     for(int i = 0;i<num_of_large_treasures;i++){
@@ -110,7 +133,7 @@ void set_collectibles(int num_of_coins, int num_of_treasures, int num_of_large_t
             x = rand() % (MAP_WIDTH - 2);
             y = rand() % MAP_HEIGHT;
         }while(mvwinch(server.map,y,x) == (char)219);
-        mvwaddch(server.map,y,x,'T');
+        mvwaddch(server.map,y,x,'T' | COLOR_PAIR(TREASURE_PAIR));
     }
 }
 
@@ -128,15 +151,18 @@ void collect_money(){
             case 'T':
                 server.players[i].money_carried += 50;
                 break;
+            case 'D':
+                pick_up_loot(i);
+                break;
             default:
-            break;
+                break;
         }
     }
 }
 
 void deposit_money(){
     for(int i = 0;i<server.num_of_players;i++){
-        if(mvwinch(server.map,server.players[i].y,server.players[i].x) == 'A'){
+        if(server.players[i].x == CAMP_X && server.players[i].y == CAMP_Y){
             server.players[i].money_brought += server.players[i].money_carried;
             server.players[i].money_carried = 0;
         }
@@ -144,7 +170,7 @@ void deposit_money(){
 }
 
 void set_camp(){
-    mvwaddch(server.map,CAMP_Y,CAMP_X,'A');
+    mvwaddch(server.map,CAMP_Y,CAMP_X,'A' | COLOR_PAIR(CAMP_PAIR));
 }
 
 void set_bushes(){
@@ -161,5 +187,67 @@ void set_bushes(){
 void check_if_bush(int index){
     if(mvwinch(server.map,server.players[index].y,server.players[index].x) == '#'){
          server.players[index].on_bush = 1;
+    }
+}
+
+void check_if_collission(){
+    for(int i = 0;i<server.num_of_players;i++){
+        for(int j = 0;j<server.num_of_players;j++){
+            if(j == i){
+                continue;
+            }
+            if(server.players[j].x == server.players[i].x && server.players[j].y == server.players[i].y){
+                set_death_point_collission(i,j);
+            }
+        }
+    }
+}
+
+void set_death_point(int index){
+    struct death_point_t* dp = &server.death_points[index];
+    if(dp->x != 0 && dp->y != 0){
+        mvwaddch(server.map,dp->y,dp->x,' ');
+    }
+    dp->money = server.players[index].money_carried;
+    dp->x = server.players[index].x;
+    dp->y = server.players[index].y;
+}
+
+void set_death_point_collission(int index1, int index2){
+    struct death_point_t* dp1 = &server.death_points[index1];
+    struct death_point_t* dp2 = &server.death_points[index2];
+    if(dp1->x != 0 && dp1->y != 0){
+        mvwaddch(server.map,dp1->y,dp1->x,' ');
+    }
+    if(dp2->x != 0 && dp2->y != 0){
+        mvwaddch(server.map,dp2->y,dp2->x,' ');
+    }
+    dp1->x = server.players[index1].x;
+    dp1->y = server.players[index1].y;
+    dp1->money = server.players[index1].money_carried;
+    dp2->x = server.players[index2].x;
+    dp2->y = server.players[index2].y;
+    dp2->money = server.players[index2].money_carried;
+
+    mvwaddch(server.map,server.players[index1].y,server.players[index1].x,'D' | COLOR_PAIR(TREASURE_PAIR));
+    server.players[index1].x = server.players[index1].spawn_x;
+    server.players[index1].y = server.players[index1].spawn_y;
+    server.players[index1].money_carried = 0;
+    server.players[index1].deaths++;
+    server.players[index2].x = server.players[index2].spawn_x;
+    server.players[index2].y = server.players[index2].spawn_y;
+    server.players[index2].money_carried = 0;
+    server.players[index2].deaths++;
+}
+
+void pick_up_loot(int index){
+    struct player_t* player = &server.players[index];
+    for(int i = 0;i<MAX_PLAYER_NUM;i++){
+        if(server.death_points[i].x == player->x && server.death_points[i].y == player->y){
+            player->money_carried += server.death_points[i].money;
+            server.death_points[i].money = 0;
+            server.death_points[i].x = 0;
+            server.death_points[i].y = 0;
+        }
     }
 }
