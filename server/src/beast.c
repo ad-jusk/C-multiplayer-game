@@ -144,6 +144,11 @@ int search_for_player(int index, int* direction){
     int start_y = y - 2;
     int end_x = x + 2;
     int end_y = y + 2;
+    char a;
+    char temp1 = mvwinch(server.map,server.players[0].y,server.players[0].x);
+    char temp2 = mvwinch(server.map,server.players[1].y,server.players[1].x);
+    char temp3 = mvwinch(server.map,server.players[2].y,server.players[2].x);
+    char temp4 = mvwinch(server.map,server.players[3].y,server.players[3].x);
     if(start_x < 1)
         start_x = 1;
     if(start_y < 1)
@@ -154,7 +159,8 @@ int search_for_player(int index, int* direction){
         end_y = MAP_HEIGHT - 2;
     for(int i = start_y;i<=end_y;i++){
         for(int j = start_x;j<=end_x;j++){
-            if(isdigit(mvwinch(server.map,i,j))){
+            a = mvwinch(server.map,i,j);
+            if(a != (char)219 && (a == temp1 || a == temp2 || a == temp3 || a == temp4)){
                 if(y == i && j < x && mvwinch(server.map,i,j+1) != (char)219){
                     //MOVE LEFT
                     *direction = 3;
