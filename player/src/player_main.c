@@ -4,15 +4,18 @@ struct player_t player;
 
 int main(){
 
+    //CONNECT
+    if(connect_to_server()){
+        printf("Server is full.\nTry again later\n");
+        return 1;
+    }
+
     initscr();
     halfdelay(10);
     noecho();
     curs_set(0);
     start_color();
     use_default_colors();
-
-    //CONNECT
-    connect_to_server();
     
     player.map = newwin(5,5,2,2);
     player.stats = newwin(14,30,2,10);

@@ -8,6 +8,7 @@
 void server_shut_down();
 void init_semaphores();
 void run_round();
+void make_fifos();
 
 //PLAYERS
 void* wait_for_players(void* arg);
@@ -21,5 +22,6 @@ void move_player(int* move, int index);
 void read_player_move(int index, int* move);
 void send_map_data_to_player(int index);
 void beast_kill_player();
+void set_player_fifos();
 
 #endif

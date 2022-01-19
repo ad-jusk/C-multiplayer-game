@@ -40,7 +40,7 @@ struct player_t{
     char fifo_to_read[30];
 };
 
-void connect_to_server();
+int connect_to_server();
 void get_map_data();
 void send_move(int* move);
 void send_PID();

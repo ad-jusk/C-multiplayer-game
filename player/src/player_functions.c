@@ -1,12 +1,15 @@
 #include "player_libs.h"
 
 
-void connect_to_server(){
+int connect_to_server(){
     int fd = open("../server/connection_fifo",O_RDONLY);
     if(fd == -1){
-        return;
+        return 1;
     }
     read(fd,&player.server_PID,sizeof(int));
+    if(player.server_PID == 1){
+        return 1;
+    }
     read(fd,&player.index,sizeof(int));
     read(fd,player.fifo_to_write,sizeof(char)*28);
     read(fd,player.fifo_to_read,sizeof(char)*28);
@@ -16,6 +19,7 @@ void connect_to_server(){
 
     player.round = 0;
     player.is_camp_discovered = 0;
+    return 0;
 }
 
 void get_map_data(){

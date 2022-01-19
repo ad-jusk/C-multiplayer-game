@@ -75,6 +75,7 @@ struct server_t{
     WINDOW* map;
     WINDOW* status;
     WINDOW* commands;
+    WINDOW* legend;
 };
 
 extern struct server_t server;

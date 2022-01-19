@@ -12,7 +12,6 @@ void beast_init(){
     server.beasts[server.num_of_beasts].y = y;
     server.beasts[server.num_of_beasts].char_to_display = ' ';
     server.num_of_beasts++;
-    mvwaddch(server.map,y,x,'*');
 }
 
 void* beast_move(void* index){
@@ -155,7 +154,7 @@ int search_for_player(int index, int* direction){
         end_y = MAP_HEIGHT - 2;
     for(int i = start_y;i<=end_y;i++){
         for(int j = start_x;j<=end_x;j++){
-            if(mvwinch(server.map,i,j) == '1' || mvwinch(server.map,i,j) == '2' || mvwinch(server.map,i,j) == '3' || mvwinch(server.map,i,j) == '4'){
+            if(isdigit(mvwinch(server.map,i,j))){
                 if(y == i && j < x && mvwinch(server.map,i,j+1) != (char)219){
                     //MOVE LEFT
                     *direction = 3;

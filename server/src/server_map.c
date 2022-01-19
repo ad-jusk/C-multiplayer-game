@@ -251,3 +251,37 @@ void pick_up_loot(int index){
         }
     }
 }
+
+void set_legend(){
+    WINDOW* win = server.legend;
+    mvwprintw(win,1,2,"LEGEND:");
+    //PLAYERS
+    mvwaddch(win,2,2,'1' | COLOR_PAIR(PLAYER_PAIR));
+    mvwaddch(win,2,3,'2' | COLOR_PAIR(PLAYER_PAIR));
+    mvwaddch(win,2,4,'3' | COLOR_PAIR(PLAYER_PAIR));
+    mvwaddch(win,2,5,'4' | COLOR_PAIR(PLAYER_PAIR));
+    mvwprintw(win,2,6," - players");
+    //BEAST
+    mvwaddch(win,3,2,'*' | COLOR_PAIR(BEAST_PAIR));
+    mvwprintw(win,3,3," - wild beast");
+    //BUSH
+    mvwaddch(win,4,2,'#');
+    mvwprintw(win,4,3," - bush (slow down)");
+    //BUSH
+    mvwaddch(win,5,2,'A' | COLOR_PAIR(CAMP_PAIR));
+    mvwprintw(win,5,3," - campsite");
+    //COINS
+    mvwaddch(win,2,24,'c' | COLOR_PAIR(TREASURE_PAIR));
+    mvwprintw(win,2,25," - coin");
+    //TREASURE
+    mvwaddch(win,3,24,'t' | COLOR_PAIR(TREASURE_PAIR));
+    mvwprintw(win,3,25," - treasure");
+    //BIG TREASURE
+    mvwaddch(win,4,24,'T' | COLOR_PAIR(TREASURE_PAIR));
+    mvwprintw(win,4,25," - big treasure");
+    wrefresh(win);
+    //DROPPED TREASURE
+    mvwaddch(win,5,24,'D' | COLOR_PAIR(TREASURE_PAIR));
+    mvwprintw(win,5,25," - dropped treasure");
+    wrefresh(win);
+}

@@ -81,6 +81,8 @@ void spawn_player(char character){
         x = rand() % (MAP_WIDTH - 2);
         y = rand() % MAP_HEIGHT;
     }while(mvwinch(server.map,y,x) != ' ');
+    int temp = server.num_of_players;
+    server.num_of_players = character - '0' - 1;
     server.players[server.num_of_players].x = x;
     server.players[server.num_of_players].y = y;
     server.players[server.num_of_players].spawn_x = x;
@@ -91,6 +93,8 @@ void spawn_player(char character){
     server.players[server.num_of_players].deaths = 0;
     server.players[server.num_of_players].char_to_display = ' ';
     server.players[server.num_of_players].on_bush = 0;
+    strcpy(server.players[server.num_of_players].type,"HUMAN");
+    server.num_of_players = temp;
     server.num_of_players++;
     mvwaddch(server.map,y,x,character | COLOR_PAIR(PLAYER_PAIR));
 }
@@ -125,6 +129,18 @@ void beast_kill_player(){
     }
 }
 
+void set_player_fifos(){
+    strcpy(server.players[0].fifo_to_read,"player1_moves_fifo");
+    strcpy(server.players[0].fifo_to_write,"info_for_pla1_fifo");
+    strcpy(server.players[1].fifo_to_read,"player2_moves_fifo");
+    strcpy(server.players[1].fifo_to_write,"info_for_pla2_fifo");
+    strcpy(server.players[2].fifo_to_read,"player3_moves_fifo");
+    strcpy(server.players[2].fifo_to_write,"info_for_pla3_fifo");
+    strcpy(server.players[3].fifo_to_read,"player4_moves_fifo");
+    strcpy(server.players[3].fifo_to_write,"info_for_pla4_fifo");
+}
+
+
 void* wait_for_players(void* arg){
     //FIFO NAMES
     char player1_moves_fifo_name[] = "../server/player1_moves_fifo";
@@ -135,135 +151,53 @@ void* wait_for_players(void* arg){
     char info_for_player3_fifo_name[] = "../server/info_for_pla3_fifo";
     char player4_moves_fifo_name[] = "../server/player4_moves_fifo";
     char info_for_player4_fifo_name[] = "../server/info_for_pla4_fifo";
-    int index = 1;
+    int index;
+    int error = 1;
 
-    //CONNECCTION FIFO FOR ALL PLAYERS
-    if(mkfifo("connection_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
+    make_fifos();
+    set_player_fifos();
+    while(1){
+        int fd = open("connection_fifo", O_WRONLY);
+        index = server.num_of_players + 1;
+        if(server.players[0].is_in == 0){
+            write(fd,&server.PID,sizeof(int));
+            write(fd,&index,sizeof(int));
+            write(fd,player1_moves_fifo_name,strlen(player1_moves_fifo_name));
+            write(fd,info_for_player1_fifo_name,strlen(info_for_player1_fifo_name));
+            spawn_player('1');
+            sem_post(&player1_is_in);
         }
-    }
-    //PLAYER'S 1 ACTIONS SENT TO SERVER
-    if(mkfifo("player1_moves_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
+        else if(server.players[1].is_in == 0){
+            write(fd,&server.PID,sizeof(int));
+            write(fd,&index,sizeof(int));
+            write(fd,player2_moves_fifo_name,strlen(player2_moves_fifo_name));
+            write(fd,info_for_player2_fifo_name,strlen(info_for_player2_fifo_name));
+            spawn_player('2');
+            sem_post(&player2_is_in);
         }
-    }
-    //SERVER'S INFO SENT TO PLAYER 1 
-    if(mkfifo("info_for_pla1_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
+        else if(server.players[2].is_in == 0){
+            write(fd,&server.PID,sizeof(int));
+            write(fd,&index,sizeof(int));
+            write(fd,player3_moves_fifo_name,strlen(player3_moves_fifo_name));
+            write(fd,info_for_player3_fifo_name,strlen(info_for_player3_fifo_name));
+            spawn_player('3');
+            sem_post(&player3_is_in);
         }
-    }
-    int fd = open("connection_fifo", O_WRONLY);
-    if(fd == -1){
-        exit(2);
+        else if(server.players[3].is_in == 0){
+            write(fd,&server.PID,sizeof(int));
+            write(fd,&index,sizeof(int));
+            write(fd,player4_moves_fifo_name,strlen(player4_moves_fifo_name));
+            write(fd,info_for_player4_fifo_name,strlen(info_for_player4_fifo_name));
+            spawn_player('4');
+            sem_post(&player4_is_in);
+        }
+        else{
+            write(fd,&error,sizeof(int));
+        }
+        close(fd);
+        sleep(1);
     }
 
-    //WAIT FOR PLAYER 1
-    write(fd,&server.PID,sizeof(int));
-    write(fd,&index,sizeof(int));
-    write(fd,player1_moves_fifo_name,strlen(player1_moves_fifo_name));
-    write(fd,info_for_player1_fifo_name,strlen(info_for_player1_fifo_name));
-    strcpy(server.players[0].fifo_to_read,"player1_moves_fifo");
-    strcpy(server.players[0].fifo_to_write,"info_for_pla1_fifo");
-    strcpy(server.players[0].type,"HUMAN");
-    spawn_player('1');
-    close(fd);
-    //PLAYER1 IS IN
-    sem_post(&player1_is_in);
-    index++;
-
-    //<-----------------------------------END OF PLAYER 1 ------------------------------------------------>
-    
-    //PLAYER'S 2 ACTIONS SENT TO SERVER
-    if(mkfifo("player2_moves_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
-        }
-    }
-    //SERVER'S INFO SENT TO PLAYER 2 
-    if(mkfifo("info_for_pla2_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
-        }
-    }
-    sleep(1);
-    int fd2 = open("connection_fifo",O_WRONLY);
-    //WAIT FOR PLAYER 2
-    write(fd2,&server.PID,sizeof(int));
-    write(fd2,&index,sizeof(int));
-    write(fd2,player2_moves_fifo_name,strlen(player2_moves_fifo_name));
-    write(fd2,info_for_player2_fifo_name,strlen(info_for_player2_fifo_name));
-    strcpy(server.players[1].fifo_to_read,"player2_moves_fifo");
-    strcpy(server.players[1].fifo_to_write,"info_for_pla2_fifo");
-    strcpy(server.players[1].type,"HUMAN");
-    spawn_player('2');
-    close(fd2);
-    //PLAYER2 IS IN
-    sem_post(&player2_is_in);
-    index++;
-
-    //<-----------------------------------END OF PLAYER 2------------------------------------------------>
-
-    //PLAYER'S 3 ACTIONS SENT TO SERVER
-    if(mkfifo("player3_moves_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
-        }
-    }
-    //SERVER'S INFO SENT TO PLAYER 3 
-    if(mkfifo("info_for_pla3_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
-        }
-    }
-    sleep(1);
-    int fd3 = open("connection_fifo",O_WRONLY);
-    //WAIT FOR PLAYER 3
-    write(fd3,&server.PID,sizeof(int));
-    write(fd3,&index,sizeof(int));
-    write(fd3,player3_moves_fifo_name,strlen(player3_moves_fifo_name));
-    write(fd3,info_for_player3_fifo_name,strlen(info_for_player3_fifo_name));
-    strcpy(server.players[2].fifo_to_read,"player3_moves_fifo");
-    strcpy(server.players[2].fifo_to_write,"info_for_pla3_fifo");
-    strcpy(server.players[2].type,"HUMAN");
-    spawn_player('3');
-    close(fd3);
-    //PLAYER3 IS IN
-    sem_post(&player3_is_in);
-    index++;
-
-    //<-----------------------------------END OF PLAYER 3 ------------------------------------------------>
-
-    //PLAYER'S 4 ACTIONS SENT TO SERVER
-    if(mkfifo("player4_moves_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
-        }
-    }
-    //SERVER'S INFO SENT TO PLAYER 4 
-    if(mkfifo("info_for_pla4_fifo",0777) == -1){
-        if(errno != EEXIST){
-            exit(1);
-        }
-    }
-    sleep(1);
-    int fd4 = open("connection_fifo",O_WRONLY);
-    //WAIT FOR PLAYER 4
-    write(fd4,&server.PID,sizeof(int));
-    write(fd4,&index,sizeof(int));
-    write(fd4,player4_moves_fifo_name,strlen(player4_moves_fifo_name));
-    write(fd4,info_for_player4_fifo_name,strlen(info_for_player4_fifo_name));
-    strcpy(server.players[3].fifo_to_read,"player4_moves_fifo");
-    strcpy(server.players[3].fifo_to_write,"info_for_pla4_fifo");
-    strcpy(server.players[3].type,"HUMAN");
-    spawn_player('4');
-    close(fd4);
-    //PLAYER4 IS IN
-    sem_post(&player4_is_in);
-
-    //<-----------------------------------END OF PLAYER 4 ------------------------------------------------>
     return NULL;
 }
 
@@ -272,7 +206,6 @@ void* manage_player1(void* arg){
     sem_wait(&player1_is_in);
     int index = *(int*)arg;
     int fd = open(server.players[index].fifo_to_read,O_RDONLY);
-
     //GET PLAYER'S PID FIRST
     read(fd,&server.players[index].PID,sizeof(int));
     close(fd);
@@ -288,7 +221,31 @@ void* manage_player1(void* arg){
         if(move == 'q' || move == 'Q'){
             clear_player_stats(0);
             sem_post(&player1_finished);
-            break;
+            sem_wait(&player1_is_in);
+            int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+            read(fd2,&server.players[index].PID,sizeof(int));
+            close(fd2);
+
+            // <-- ROUND AFTER QUIT -->
+            sem_wait(&round_start);
+            send_map_data_to_player(index);
+            read_player_move(0,&move);
+            move_player(&move,index);
+            if(server.players[index].on_bush == 1){
+                move = 'b';
+                flag = 1;
+            }
+            check_if_bush(index);
+            if(flag == 1 && move != -1){
+                flag = 0;
+                server.players[index].on_bush = 0;
+                server.players[index].char_to_display = '#';
+            }
+            sem_post(&player1_finished);
+            sem_wait(&round_end);
+            send_map_data_to_player(index);
+            continue;
+            //<-- END OF ROUND -->
         }
         if(server.players[index].on_bush == 1){
             move = 'b';
@@ -331,7 +288,31 @@ void* manage_player2(void* arg){
         if(move == 'q' || move == 'Q'){
             clear_player_stats(1);
             sem_post(&player2_finished);
-            break;
+            sem_wait(&player2_is_in);
+            int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+            read(fd2,&server.players[index].PID,sizeof(int));
+            close(fd2);
+
+            // <-- ROUND AFTER QUIT -->
+            sem_wait(&round_start);
+            send_map_data_to_player(index);
+            read_player_move(index,&move);
+            move_player(&move,index);
+            if(server.players[index].on_bush == 1){
+                move = 'b';
+                flag = 1;
+            }
+            check_if_bush(index);
+            if(flag == 1 && move != -1){
+                flag = 0;
+                server.players[index].on_bush = 0;
+                server.players[index].char_to_display = '#';
+            }
+            sem_post(&player2_finished);
+            sem_wait(&round_end);
+            send_map_data_to_player(index);
+            continue;
+            //<-- END OF ROUND -->
         }
         if(server.players[index].on_bush == 1){
             move = 'b';
@@ -374,7 +355,31 @@ void* manage_player3(void* arg){
         if(move == 'q' || move == 'Q'){
             clear_player_stats(2);
             sem_post(&player3_finished);
-            break;
+            sem_wait(&player3_is_in);
+            int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+            read(fd2,&server.players[index].PID,sizeof(int));
+            close(fd2);
+
+            // <-- ROUND AFTER QUIT -->
+            sem_wait(&round_start);
+            send_map_data_to_player(index);
+            read_player_move(index,&move);
+            move_player(&move,index);
+            if(server.players[index].on_bush == 1){
+                move = 'b';
+                flag = 1;
+            }
+            check_if_bush(index);
+            if(flag == 1 && move != -1){
+                flag = 0;
+                server.players[index].on_bush = 0;
+                server.players[index].char_to_display = '#';
+            }
+            sem_post(&player3_finished);
+            sem_wait(&round_end);
+            send_map_data_to_player(index);
+            continue;
+            //<-- END OF ROUND -->
         }
         if(server.players[index].on_bush == 1){
             move = 'b';
@@ -419,7 +424,31 @@ void* manage_player4(void* arg){
         if(move == 'q' || move == 'Q'){
             clear_player_stats(3);
             sem_post(&player4_finished);
-            break;
+            sem_wait(&player4_is_in);
+            int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+            read(fd2,&server.players[index].PID,sizeof(int));
+            close(fd2);
+
+            // <-- ROUND AFTER QUIT -->
+            sem_wait(&round_start);
+            send_map_data_to_player(index);
+            read_player_move(index,&move);
+            move_player(&move,index);
+            if(server.players[index].on_bush == 1){
+                move = 'b';
+                flag = 1;
+            }
+            check_if_bush(index);
+            if(flag == 1 && move != -1){
+                flag = 0;
+                server.players[index].on_bush = 0;
+                server.players[index].char_to_display = '#';
+            }
+            sem_post(&player4_finished);
+            sem_wait(&round_end);
+            send_map_data_to_player(index);
+            continue;
+            //<-- END OF ROUND -->
         }
         if(server.players[index].on_bush == 1){
             move = 'b';
@@ -560,5 +589,65 @@ void move_player(int* move, int index){
     }
     else if(isdigit(server.players[index].char_to_display)){
         server.players[index].char_to_display = ' ';
+    }
+    else if(server.players[index].char_to_display != '#'){
+        server.players[index].char_to_display = ' ';
+    }
+}
+
+void make_fifos(){
+    //CONNECCTION FIFO FOR ALL PLAYERS
+    if(mkfifo("connection_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
+    }
+    //PLAYER'S 1 ACTIONS SENT TO SERVER
+    if(mkfifo("player1_moves_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
+    }
+    //SERVER'S INFO SENT TO PLAYER 1 
+    if(mkfifo("info_for_pla1_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
+    }
+    //PLAYER'S 2 ACTIONS SENT TO SERVER
+    if(mkfifo("player2_moves_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
+    }
+    //SERVER'S INFO SENT TO PLAYER 2 
+    if(mkfifo("info_for_pla2_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
+    }
+    //PLAYER'S 3 ACTIONS SENT TO SERVER
+    if(mkfifo("player3_moves_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
+    }
+    //SERVER'S INFO SENT TO PLAYER 3 
+    if(mkfifo("info_for_pla3_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
+    }
+    //PLAYER'S 4 ACTIONS SENT TO SERVER
+    if(mkfifo("player4_moves_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
+    }
+    //SERVER'S INFO SENT TO PLAYER 4 
+    if(mkfifo("info_for_pla4_fifo",0777) == -1){
+        if(errno != EEXIST){
+            exit(1);
+        }
     }
 }

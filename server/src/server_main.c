@@ -29,16 +29,19 @@ int main(){
     //SERVER MAP
     server.map = newwin(MAP_HEIGHT,MAP_WIDTH,1,1);
     keypad(server.map,1);
-
     //SERVER STATUS
     server.status = newwin(STATUS_BAR_HEIGHT,STATUS_BAR_WIDTH,1,MAP_WIDTH+2);
     box(server.status,0,0);
+    //SERVER LEGEND
+    server.legend = newwin(7,STATUS_BAR_WIDTH,STATUS_BAR_HEIGHT+1,MAP_WIDTH+2);
+    box(server.legend,0,0);
     //SERVER COMMANDS
-    server.commands = newwin(8,29,STATUS_BAR_HEIGHT+1,MAP_WIDTH+2);
+    server.commands = newwin(8,29,STATUS_BAR_HEIGHT+8,MAP_WIDTH+2);
     box(server.commands,0,0);
     fill_command_window();
     //SET COLOR PAIRS
     init_colors();
+    set_legend();
 
     //START_SERVER
     if(start_server()){
@@ -94,7 +97,7 @@ int main(){
         run_round();
         set_current_server_status_and_map();
 
-    }while(input != 'q');
+    }while(input != 'q' && input != 'Q');
 
     server_shut_down();
 

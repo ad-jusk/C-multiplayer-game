@@ -12,6 +12,7 @@ void set_bushes();
 void set_collectibles(int num_of_coins, int num_of_treasures, int num_of_large_treasures);
 void set_current_server_status_and_map();
 void fill_command_window();
+void set_legend();
 
 //ROUND
 void display_players();
