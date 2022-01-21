@@ -11,7 +11,7 @@ int main(){
     }
 
     initscr();
-    halfdelay(10);
+    halfdelay(8);
     noecho();
     curs_set(0);
     start_color();

@@ -19,8 +19,8 @@ void* manage_player2(void* arg);
 void* manage_player3(void* arg);
 void* manage_player4(void* arg);
 void move_player(int* move, int index);
-void read_player_move(int index, int* move);
-void send_map_data_to_player(int index);
+int read_player_move(int index, int* move);
+int send_map_data_to_player(int index);
 void beast_kill_player();
 void set_player_fifos();
 

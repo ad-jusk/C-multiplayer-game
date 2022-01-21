@@ -217,8 +217,15 @@ void* manage_player1(void* arg){
     send_map_data_to_player(index);
     while(1){
         sem_wait(&round_start);
-        //MOVE PLAYER
-        read_player_move(0,&move);
+        //MOVE PLAYER IF PROCESS IS NOT TERMINATED
+        if(kill((pid_t)server.players[index].PID,0) == -1){
+            if(errno == ESRCH){
+                move = 'q';
+            }
+        }
+        else{
+            read_player_move(0,&move);
+        }
         if(move == 'q' || move == 'Q'){
             clear_player_stats(0);
             sem_post(&player1_finished);
@@ -283,9 +290,15 @@ void* manage_player2(void* arg){
     send_map_data_to_player(index);
     while(1){
         sem_wait(&round_start);
-       
-        //MOVE PLAYER
-        read_player_move(index,&move);
+        //MOVE PLAYER IF PROCESS IS NOT TERMINATED
+        if(kill((pid_t)server.players[index].PID,0) == -1){
+            if(errno == ESRCH){
+                move = 'q';
+            }
+        }
+        else{
+            read_player_move(1,&move);
+        }
         if(move == 'q' || move == 'Q'){
             clear_player_stats(1);
             sem_post(&player2_finished);
@@ -351,8 +364,15 @@ void* manage_player3(void* arg){
     while(1){
         sem_wait(&round_start);
        
-        //MOVE PLAYER
-        read_player_move(index,&move);
+        //MOVE PLAYER IF PROCESS IS NOT TERMINATED
+        if(kill((pid_t)server.players[index].PID,0) == -1){
+            if(errno == ESRCH){
+                move = 'q';
+            }
+        }
+        else{
+            read_player_move(2,&move);
+        }
         if(move == 'q' || move == 'Q'){
             clear_player_stats(2);
             sem_post(&player3_finished);
@@ -420,8 +440,15 @@ void* manage_player4(void* arg){
     while(1){
         sem_wait(&round_start);
        
-        //MOVE PLAYER
-        read_player_move(index,&move);
+        //MOVE PLAYER IF PROCESS IS NOT TERMINATED
+        if(kill((pid_t)server.players[index].PID,0) == -1){
+            if(errno == ESRCH){
+                move = 'q';
+            }
+        }
+        else{
+            read_player_move(3,&move);
+        }
         if(move == 'q' || move == 'Q'){
             clear_player_stats(3);
             sem_post(&player4_finished);
@@ -473,13 +500,17 @@ void* manage_player4(void* arg){
 
 }
 
-void read_player_move(int index, int* move){
+int read_player_move(int index, int* move){
     int fd = open(server.players[index].fifo_to_read,O_RDONLY);
-    read(fd,move,sizeof(int));
+    if(read(fd,move,sizeof(int)) == -1){
+        close(fd);
+        return 1;
+    }
     close(fd);
+    return 0;
 }
 
-void send_map_data_to_player(int index){
+int send_map_data_to_player(int index){
     
     int x = server.players[index].x;
     int y = server.players[index].y;
@@ -520,16 +551,36 @@ void send_map_data_to_player(int index){
     int fd = open(server.players[index].fifo_to_write,O_WRONLY);
     for(int i = 0;i<5;i++){
         for(int j = 0;j<5;j++){
-            write(fd,&map[i][j],sizeof(char));
+            if(write(fd,&map[i][j],sizeof(char)) == -1){
+                close(fd);
+                return 1;
+            }
         }
     }
     //SEND DATA
-    write(fd,&server.players[index].x,sizeof(int));
-    write(fd,&server.players[index].y,sizeof(int));
-    write(fd,&server.players[index].deaths,sizeof(int));
-    write(fd,&server.players[index].money_carried,sizeof(int));
-    write(fd,&server.players[index].money_brought,sizeof(int));
+    if(write(fd,&server.players[index].x,sizeof(int)) == -1){
+        close(fd);
+        return 1;
+    }
+    if(write(fd,&server.players[index].y,sizeof(int)) == -1){
+        close(fd);
+        return 1;
+    }
+    
+    if(write(fd,&server.players[index].deaths,sizeof(int)) == -1){
+        close(fd);
+        return 1;
+    }
+    if(write(fd,&server.players[index].money_carried,sizeof(int)) == -1){
+        close(fd);
+        return 1;
+    }
+    if(write(fd,&server.players[index].money_brought,sizeof(int)) == -1){
+        close(fd);
+        return 1;
+    }
     close(fd);
+    return 0;
 }
 
 

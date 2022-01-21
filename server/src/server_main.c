@@ -21,7 +21,7 @@ int main(){
     srand(time(NULL));
     initscr();
     curs_set(0);
-    halfdelay(10);
+    halfdelay(8);
     noecho();
     start_color();
     use_default_colors();

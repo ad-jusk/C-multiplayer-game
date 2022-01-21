@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <semaphore.h>
+#include <signal.h>
 
 #define MAX_BEAST_NUM 5
 #define MAX_PLAYER_NUM 4
