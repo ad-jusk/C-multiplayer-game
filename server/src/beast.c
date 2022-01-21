@@ -129,9 +129,6 @@ void make_a_move(int i){
     if(isalpha(temp) || temp == '#'){
         server.beasts[i].char_to_display = temp;
     }
-    else if(isdigit(temp) && temp != 'D'){
-        server.beasts[i].char_to_display = 'D';
-    }
     else{
         server.beasts[i].char_to_display = ' ';
     }

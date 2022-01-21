@@ -72,7 +72,7 @@ void set_current_server_status_and_map(){
         mvwprintw(server.status,8,12+9*i,"  %02d/%02d",server.players[i].y,server.players[i].x);
         mvwprintw(server.status,9,12+9*i,"%7d",server.players[i].deaths);
         if(server.players[i].x == CAMP_X && server.players[i].y == CAMP_Y){
-            wmove(server.status,12,0);
+            wmove(server.status,12,12+9*i);
             wclrtoeol(server.status);
             mvwprintw(server.status,12,3,"carried:");
             box(server.status,0,0);

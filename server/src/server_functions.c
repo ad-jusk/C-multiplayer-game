@@ -124,6 +124,7 @@ void beast_kill_player(){
                 server.players[j].y = server.players[j].spawn_y;
                 server.players[j].money_carried = 0;
                 server.players[j].deaths++;
+                server.beasts[i].char_to_display = 'D';
             }
         }
     }
