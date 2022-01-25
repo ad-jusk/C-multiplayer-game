@@ -13,6 +13,15 @@ void server_shut_down(){
     sem_destroy(&player2_finished);
     sem_destroy(&player3_finished);
     sem_destroy(&player4_finished);
+    remove("connection_fifo");
+    remove("info_for_pla1_fifo");
+    remove("player1_moves_fifo");
+    remove("info_for_pla2_fifo");
+    remove("player2_moves_fifo");
+    remove("info_for_pla3_fifo");
+    remove("player3_moves_fifo");
+    remove("info_for_pla4_fifo");
+    remove("player4_moves_fifo");
 }
 
 void init_semaphores(){
@@ -75,12 +84,35 @@ void run_round(){
 
 //PLAYERS FUNCTIONS
 
+void spawn_players_main(){
+    if(server.players[0].wait_spawn){
+        spawn_player('1');
+        server.players[0].wait_spawn = 0;
+        sem_post(&player1_is_in);
+    }
+    if(server.players[1].wait_spawn){
+        spawn_player('2');
+        server.players[1].wait_spawn = 0;
+        sem_post(&player2_is_in);
+    }
+    if(server.players[2].wait_spawn){
+        spawn_player('3');
+        server.players[2].wait_spawn = 0;
+        sem_post(&player3_is_in);
+    }
+    if(server.players[3].wait_spawn){
+        spawn_player('4');
+        server.players[3].wait_spawn = 0;
+        sem_post(&player4_is_in);
+    }
+}
+
 void spawn_player(char character){
     int x, y;
     do{
         x = rand() % (MAP_WIDTH - 2);
         y = rand() % MAP_HEIGHT;
-    }while(mvwinch(server.map,y,x) != ' ');
+    }while(mvwinch(server.map,y,x) == (char)219 || (x == CAMP_X && y == CAMP_Y));
     int temp = server.num_of_players;
     server.num_of_players = character - '0' - 1;
     server.players[server.num_of_players].x = x;
@@ -165,32 +197,28 @@ void* wait_for_players(void* arg){
             write(fd,&index,sizeof(int));
             write(fd,player1_moves_fifo_name,strlen(player1_moves_fifo_name));
             write(fd,info_for_player1_fifo_name,strlen(info_for_player1_fifo_name));
-            spawn_player('1');
-            sem_post(&player1_is_in);
+            server.players[0].wait_spawn = 1;
         }
         else if(server.players[1].is_in == 0){
             write(fd,&server.PID,sizeof(int));
             write(fd,&index,sizeof(int));
             write(fd,player2_moves_fifo_name,strlen(player2_moves_fifo_name));
             write(fd,info_for_player2_fifo_name,strlen(info_for_player2_fifo_name));
-            spawn_player('2');
-            sem_post(&player2_is_in);
+            server.players[1].wait_spawn = 1;
         }
         else if(server.players[2].is_in == 0){
             write(fd,&server.PID,sizeof(int));
             write(fd,&index,sizeof(int));
             write(fd,player3_moves_fifo_name,strlen(player3_moves_fifo_name));
             write(fd,info_for_player3_fifo_name,strlen(info_for_player3_fifo_name));
-            spawn_player('3');
-            sem_post(&player3_is_in);
+            server.players[2].wait_spawn = 1;
         }
         else if(server.players[3].is_in == 0){
             write(fd,&server.PID,sizeof(int));
             write(fd,&index,sizeof(int));
             write(fd,player4_moves_fifo_name,strlen(player4_moves_fifo_name));
             write(fd,info_for_player4_fifo_name,strlen(info_for_player4_fifo_name));
-            spawn_player('4');
-            sem_post(&player4_is_in);
+            server.players[3].wait_spawn = 1;
         }
         else{
             write(fd,&error,sizeof(int));
@@ -270,7 +298,11 @@ void* manage_player1(void* arg){
         sem_wait(&round_end);
 
         //SEND MAP
-        send_map_data_to_player(index);
+        if(kill((pid_t)server.players[index].PID,0) != -1){
+            if(errno != ESRCH){
+                send_map_data_to_player(index);
+            }
+        }
     }
     return NULL;
 }
@@ -342,7 +374,11 @@ void* manage_player2(void* arg){
         sem_post(&player2_finished);
         sem_wait(&round_end);
         //SEND MAP
-        send_map_data_to_player(index);
+        if(kill((pid_t)server.players[index].PID,0) != -1){
+            if(errno != ESRCH){
+                send_map_data_to_player(index);
+            }
+        }
     }
     return NULL;
 
@@ -418,7 +454,11 @@ void* manage_player3(void* arg){
         sem_wait(&round_end);
 
         //SEND MAP
-        send_map_data_to_player(index);
+        if(kill((pid_t)server.players[index].PID,0) != -1){
+            if(errno != ESRCH){
+                send_map_data_to_player(index);
+            }
+        }
     }
     return NULL;
 
@@ -494,7 +534,11 @@ void* manage_player4(void* arg){
         sem_wait(&round_end);
 
         //SEND MAP
-        send_map_data_to_player(index);
+        if(kill((pid_t)server.players[index].PID,0) != -1){
+            if(errno != ESRCH){
+                send_map_data_to_player(index);
+            }
+        }
     }
     return NULL;
 
@@ -651,54 +695,63 @@ void make_fifos(){
     //CONNECCTION FIFO FOR ALL PLAYERS
     if(mkfifo("connection_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }
     //PLAYER'S 1 ACTIONS SENT TO SERVER
     if(mkfifo("player1_moves_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }
     //SERVER'S INFO SENT TO PLAYER 1 
     if(mkfifo("info_for_pla1_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }
     //PLAYER'S 2 ACTIONS SENT TO SERVER
     if(mkfifo("player2_moves_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }
     //SERVER'S INFO SENT TO PLAYER 2 
     if(mkfifo("info_for_pla2_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }
     //PLAYER'S 3 ACTIONS SENT TO SERVER
     if(mkfifo("player3_moves_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }
     //SERVER'S INFO SENT TO PLAYER 3 
     if(mkfifo("info_for_pla3_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }
     //PLAYER'S 4 ACTIONS SENT TO SERVER
     if(mkfifo("player4_moves_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }
     //SERVER'S INFO SENT TO PLAYER 4 
     if(mkfifo("info_for_pla4_fifo",0777) == -1){
         if(errno != EEXIST){
+            server_shut_down();
             exit(1);
         }
     }

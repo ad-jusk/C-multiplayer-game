@@ -21,7 +21,7 @@ int main(){
     srand(time(NULL));
     initscr();
     curs_set(0);
-    halfdelay(8);
+    halfdelay(7);
     noecho();
     start_color();
     use_default_colors();
@@ -69,21 +69,41 @@ int main(){
     int beast_indexes[5] = {0,1,2,3,4};
 
     beast_init();
-    pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]);
-    pthread_create(&players_wait,NULL,wait_for_players,NULL);
-    pthread_create(&players[0],NULL,manage_player1,&player_indexes[0]);
-    pthread_create(&players[1],NULL,manage_player2,&player_indexes[1]);
-    pthread_create(&players[2],NULL,manage_player3,&player_indexes[2]);
-    pthread_create(&players[3],NULL,manage_player4,&player_indexes[3]);
+    if(pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]) != 0){
+        server_shut_down();
+        return 1;
+    }
+    if(pthread_create(&players_wait,NULL,wait_for_players,NULL) != 0){
+        server_shut_down();
+        return 1;
+    }
+    if(pthread_create(&players[0],NULL,manage_player1,&player_indexes[0]) != 0){
+        server_shut_down();
+        return 1;
+    }
+    if(pthread_create(&players[1],NULL,manage_player2,&player_indexes[1]) != 0){
+        server_shut_down();
+        return 1;
+    }
+    if(pthread_create(&players[2],NULL,manage_player3,&player_indexes[2]) != 0){
+        server_shut_down();
+        return 1;
+    }
+    if(pthread_create(&players[3],NULL,manage_player4,&player_indexes[3]) != 0){
+        server_shut_down();
+        return 1;
+    }
 
     do{
         input = wgetch(server.map);
         if(input == 'b' || input == 'B'){
-            if(server.num_of_beasts == MAX_BEAST_NUM){
-                continue;
+            if(server.num_of_beasts < MAX_BEAST_NUM){
+                beast_init();
+                if(pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]) != 0){
+                    server_shut_down();
+                    return 1;
+                }
             }
-            beast_init();
-            pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]);
         }
         else if(input == 'c'){
             set_collectibles(1,0,0);
@@ -94,6 +114,7 @@ int main(){
         else if(input == 'T'){
             set_collectibles(0,0,1);
         }
+        spawn_players_main();
         run_round();
         set_current_server_status_and_map();
 

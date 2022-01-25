@@ -4,10 +4,10 @@
 void beast_init(){
     int x, y;
     do{
-        x = rand() % (MAP_WIDTH - 2);
+        x = rand() % (MAP_WIDTH - 3) + 1;
         y = rand() % MAP_HEIGHT;
 
-    }while(mvwinch(server.map,y,x) == (char)219);
+    }while(mvwinch(server.map,y,x) == (char)219 || (x == CAMP_X && y == CAMP_Y));
     server.beasts[server.num_of_beasts].x = x;
     server.beasts[server.num_of_beasts].y = y;
     server.beasts[server.num_of_beasts].char_to_display = ' ';
@@ -69,6 +69,10 @@ void make_a_move(int i){
             }
 
         }while(flag);
+    }
+
+    if(server.beasts[i].char_to_display == ('*' | COLOR_PAIR(BEAST_PAIR))){
+        server.beasts[i].char_to_display = ' ';
     }
 
     switch(direction){

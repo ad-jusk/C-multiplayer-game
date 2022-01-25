@@ -29,5 +29,4 @@ $(OBJ)/beast.o: $(SRC)/beast.c $(SRC)/beast.h
 .PHONY: clean
 
 clean:
-	-rm $(OBJ)/*.o server connection_fifo info_for_pla1_fifo player1_moves_fifo info_for_pla2_fifo player2_moves_fifo info_for_pla3_fifo player3_moves_fifo
-	-rm info_for_pla4_fifo player4_moves_fifo
+	-rm $(OBJ)/*.o server

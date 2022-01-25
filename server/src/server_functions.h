@@ -23,5 +23,6 @@ int read_player_move(int index, int* move);
 int send_map_data_to_player(int index);
 void beast_kill_player();
 void set_player_fifos();
+void spawn_players_main();
 
 #endif

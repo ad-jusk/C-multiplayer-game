@@ -27,10 +27,11 @@ int start_server(){
         server.players[i].is_in = 0;
         server.players[i].money_brought = 0;
         server.players[i].money_carried = 0;
+        server.players[i].wait_spawn = 0;
         strcpy(server.players[i].type,"-----");
         //DEATH POINTS
-        server.death_points[i].x = 0;
-        server.death_points[i].y = 0;
+        server.death_points[i].x = -1;
+        server.death_points[i].y = -1;
         server.death_points[i].money = 0;
     }
     if(load_map()){
@@ -96,7 +97,7 @@ void fill_command_window(){
 }
 
 void display_players(){
-    for(int i = 0;i<server.num_of_players;i++){
+    for(int i = 0;i<MAX_PLAYER_NUM;i++){
         if(server.players[i].x != 0 && server.players[i].y != 0){
             mvwaddch(server.map,server.players[i].y,server.players[i].x,((i+1) + '0')  | COLOR_PAIR(PLAYER_PAIR));
         }
