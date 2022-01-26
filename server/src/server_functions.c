@@ -24,18 +24,96 @@ void server_shut_down(){
     remove("player4_moves_fifo");
 }
 
-void init_semaphores(){
-    sem_init(&player1_is_in,0,0);
-    sem_init(&player2_is_in,0,0);
-    sem_init(&player3_is_in,0,0);
-    sem_init(&player4_is_in,0,0);
-    sem_init(&round_start,0,0);
-    sem_init(&round_end,0,0);
-    sem_init(&beast_finished,0,0);
-    sem_init(&player1_finished,0,0);
-    sem_init(&player2_finished,0,0);
-    sem_init(&player3_finished,0,0);
-    sem_init(&player4_finished,0,0);
+int init_semaphores(){
+    if(sem_init(&player1_is_in,0,0) == -1){
+        return 1;
+    }
+    if(sem_init(&player2_is_in,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        return 1;
+    }
+    if(sem_init(&player3_is_in,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        return 1;
+    }
+    if(sem_init(&player4_is_in,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        return 1;
+    }
+    if(sem_init(&round_start,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        sem_destroy(&player4_is_in);
+        return 1;
+    }
+    if(sem_init(&round_end,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        sem_destroy(&player4_is_in);
+        sem_destroy(&round_start);
+        return 1;
+    }
+    if(sem_init(&beast_finished,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        sem_destroy(&player4_is_in);
+        sem_destroy(&round_start);
+        sem_destroy(&round_end);
+        return 1;
+    }
+    if(sem_init(&player1_finished,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        sem_destroy(&player4_is_in);
+        sem_destroy(&round_start);
+        sem_destroy(&round_end);
+        sem_destroy(&beast_finished);
+        return 1;
+    }
+    if(sem_init(&player2_finished,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        sem_destroy(&player4_is_in);
+        sem_destroy(&round_start);
+        sem_destroy(&round_end);
+        sem_destroy(&beast_finished);
+        sem_destroy(&player1_finished);
+        return 1;
+    }
+    if(sem_init(&player3_finished,0,0) == -1){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        sem_destroy(&player4_is_in);
+        sem_destroy(&round_start);
+        sem_destroy(&round_end);
+        sem_destroy(&beast_finished);
+        sem_destroy(&player1_finished);
+        sem_destroy(&player2_finished);
+        return 1;
+    }
+    if(sem_init(&player4_finished,0,0) == -1){
+       sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        sem_destroy(&player4_is_in);
+        sem_destroy(&round_start);
+        sem_destroy(&round_end);
+        sem_destroy(&beast_finished);
+        sem_destroy(&player1_finished);
+        sem_destroy(&player2_finished);
+        sem_destroy(&player3_finished);
+        return 1; 
+    }
+    return 0;
 }
 
 void run_round(){
@@ -63,7 +141,6 @@ void run_round(){
         //WAIT FOR PLAYER 4 TO FINISH
         sem_wait(&player4_finished);
     }
-
 
     //DO CODE REGRDING SINGLE ROUND HERE
     server.round++;
@@ -129,6 +206,25 @@ void spawn_player(char character){
     server.num_of_players = temp;
     server.num_of_players++;
     mvwaddch(server.map,y,x,character | COLOR_PAIR(PLAYER_PAIR));
+}
+
+void remove_players_main(){
+    if(server.players[0].want_to_quit){
+        clear_player_stats(0);
+        server.players[0].want_to_quit = 0;
+    }
+    if(server.players[1].want_to_quit){
+        clear_player_stats(1);
+        server.players[1].want_to_quit = 0;
+    }
+    if(server.players[2].want_to_quit){
+        clear_player_stats(2);
+        server.players[2].want_to_quit = 0;
+    }
+    if(server.players[3].want_to_quit){
+        clear_player_stats(3);
+        server.players[3].want_to_quit = 0;
+    }
 }
 
 void clear_player_stats(int index){
@@ -246,31 +342,42 @@ void* manage_player1(void* arg){
     while(1){
         sem_wait(&round_start);
         //MOVE PLAYER IF PROCESS IS NOT TERMINATED
-        if(kill((pid_t)server.players[index].PID,0) == -1){
-            if(errno == ESRCH){
-                move = 'q';
+        if(kill((pid_t)server.players[index].PID,0) != -1){
+            read_player_move(index,&move);
+            if(move == 'q' || move == 'Q'){
+                server.players[index].want_to_quit = 1;
+                sem_post(&player1_finished);
+                sem_wait(&round_end);
+                sem_wait(&player1_is_in);
+                int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+                read(fd2,&server.players[index].PID,sizeof(int));
+                close(fd2);
+                // <-- ROUND AFTER QUIT -->
+                sem_wait(&round_start);
+                send_map_data_to_player(index);
+                read_player_move(index,&move);
+                move_player(&move,index);
+                if(server.players[index].on_bush == 1){
+                    move = 'b';
+                    flag = 1;
+                }
+                check_if_bush(index);
+                if(flag == 1 && move != -1){
+                    flag = 0;
+                    server.players[index].on_bush = 0;
+                    server.players[index].char_to_display = '#';
+                }
+                sem_post(&player1_finished);
+                sem_wait(&round_end);
+                send_map_data_to_player(index);
+                continue;
+                //<-- END OF ROUND -->
             }
-        }
-        else{
-            read_player_move(0,&move);
-        }
-        if(move == 'q' || move == 'Q'){
-            clear_player_stats(0);
-            sem_post(&player1_finished);
-            sem_wait(&player1_is_in);
-            int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
-            read(fd2,&server.players[index].PID,sizeof(int));
-            close(fd2);
-
-            // <-- ROUND AFTER QUIT -->
-            sem_wait(&round_start);
-            send_map_data_to_player(index);
-            read_player_move(0,&move);
-            move_player(&move,index);
             if(server.players[index].on_bush == 1){
                 move = 'b';
                 flag = 1;
             }
+            move_player(&move,index);
             check_if_bush(index);
             if(flag == 1 && move != -1){
                 flag = 0;
@@ -279,28 +386,42 @@ void* manage_player1(void* arg){
             }
             sem_post(&player1_finished);
             sem_wait(&round_end);
-            send_map_data_to_player(index);
-            continue;
-            //<-- END OF ROUND -->
-        }
-        if(server.players[index].on_bush == 1){
-            move = 'b';
-            flag = 1;
-        }
-        move_player(&move,index);
-        check_if_bush(index);
-        if(flag == 1 && move != -1){
-            flag = 0;
-            server.players[index].on_bush = 0;
-            server.players[index].char_to_display = '#';
-        }
-        sem_post(&player1_finished);
-        sem_wait(&round_end);
 
-        //SEND MAP
-        if(kill((pid_t)server.players[index].PID,0) != -1){
-            if(errno != ESRCH){
+            //SEND MAP
+            send_map_data_to_player(index);
+        }
+        else{
+            if(errno == ESRCH){
+                move = 'q';
+            }
+            if(move == 'q' || move == 'Q'){
+                server.players[index].want_to_quit = 1;
+                sem_post(&player1_finished);
+                sem_wait(&round_end);
+                sem_wait(&player1_is_in);
+                int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+                read(fd2,&server.players[index].PID,sizeof(int));
+                close(fd2);
+
+                // <-- ROUND AFTER QUIT -->
+                sem_wait(&round_start);
                 send_map_data_to_player(index);
+                read_player_move(index,&move);
+                move_player(&move,index);
+                if(server.players[index].on_bush == 1){
+                    move = 'b';
+                    flag = 1;
+                }
+                check_if_bush(index);
+                if(flag == 1 && move != -1){
+                    flag = 0;
+                    server.players[index].on_bush = 0;
+                    server.players[index].char_to_display = '#';
+                }
+                sem_post(&player1_finished);
+                sem_wait(&round_end);
+                send_map_data_to_player(index);
+                //<-- END OF ROUND -->
             }
         }
     }
@@ -323,31 +444,43 @@ void* manage_player2(void* arg){
     while(1){
         sem_wait(&round_start);
         //MOVE PLAYER IF PROCESS IS NOT TERMINATED
-        if(kill((pid_t)server.players[index].PID,0) == -1){
-            if(errno == ESRCH){
-                move = 'q';
-            }
-        }
-        else{
-            read_player_move(1,&move);
-        }
-        if(move == 'q' || move == 'Q'){
-            clear_player_stats(1);
-            sem_post(&player2_finished);
-            sem_wait(&player2_is_in);
-            int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
-            read(fd2,&server.players[index].PID,sizeof(int));
-            close(fd2);
-
-            // <-- ROUND AFTER QUIT -->
-            sem_wait(&round_start);
-            send_map_data_to_player(index);
+        if(kill((pid_t)server.players[index].PID,0) != -1){
             read_player_move(index,&move);
-            move_player(&move,index);
+            if(move == 'q' || move == 'Q'){
+                server.players[index].want_to_quit = 1;
+                sem_post(&player2_finished);
+                sem_wait(&round_end);
+                sem_wait(&player2_is_in);
+                int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+                read(fd2,&server.players[index].PID,sizeof(int));
+                close(fd2);
+
+                // <-- ROUND AFTER QUIT -->
+                sem_wait(&round_start);
+                send_map_data_to_player(index);
+                read_player_move(index,&move);
+                move_player(&move,index);
+                if(server.players[index].on_bush == 1){
+                    move = 'b';
+                    flag = 1;
+                }
+                check_if_bush(index);
+                if(flag == 1 && move != -1){
+                    flag = 0;
+                    server.players[index].on_bush = 0;
+                    server.players[index].char_to_display = '#';
+                }
+                sem_post(&player2_finished);
+                sem_wait(&round_end);
+                send_map_data_to_player(index);
+                continue;
+                //<-- END OF ROUND -->
+            }
             if(server.players[index].on_bush == 1){
                 move = 'b';
                 flag = 1;
             }
+            move_player(&move,index);
             check_if_bush(index);
             if(flag == 1 && move != -1){
                 flag = 0;
@@ -356,27 +489,42 @@ void* manage_player2(void* arg){
             }
             sem_post(&player2_finished);
             sem_wait(&round_end);
+
+            //SEND MAP
             send_map_data_to_player(index);
-            continue;
-            //<-- END OF ROUND -->
         }
-        if(server.players[index].on_bush == 1){
-            move = 'b';
-            flag = 1;
-        }
-        move_player(&move,index);
-        check_if_bush(index);
-        if(flag == 1 && move != -1){
-            flag = 0;
-            server.players[index].on_bush = 0;
-            server.players[index].char_to_display = '#';
-        }
-        sem_post(&player2_finished);
-        sem_wait(&round_end);
-        //SEND MAP
-        if(kill((pid_t)server.players[index].PID,0) != -1){
-            if(errno != ESRCH){
+        else{
+            if(errno == ESRCH){
+                move = 'q';
+            }
+            if(move == 'q' || move == 'Q'){
+                server.players[index].want_to_quit = 1;
+                sem_post(&player2_finished);
+                sem_wait(&round_end);
+                sem_wait(&player2_is_in);
+                int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+                read(fd2,&server.players[index].PID,sizeof(int));
+                close(fd2);
+
+                // <-- ROUND AFTER QUIT -->
+                sem_wait(&round_start);
                 send_map_data_to_player(index);
+                read_player_move(index,&move);
+                move_player(&move,index);
+                if(server.players[index].on_bush == 1){
+                    move = 'b';
+                    flag = 1;
+                }
+                check_if_bush(index);
+                if(flag == 1 && move != -1){
+                    flag = 0;
+                    server.players[index].on_bush = 0;
+                    server.players[index].char_to_display = '#';
+                }
+                sem_post(&player2_finished);
+                sem_wait(&round_end);
+                send_map_data_to_player(index);
+                //<-- END OF ROUND -->
             }
         }
     }
@@ -399,33 +547,44 @@ void* manage_player3(void* arg){
     send_map_data_to_player(index);
     while(1){
         sem_wait(&round_start);
-       
         //MOVE PLAYER IF PROCESS IS NOT TERMINATED
-        if(kill((pid_t)server.players[index].PID,0) == -1){
-            if(errno == ESRCH){
-                move = 'q';
-            }
-        }
-        else{
-            read_player_move(2,&move);
-        }
-        if(move == 'q' || move == 'Q'){
-            clear_player_stats(2);
-            sem_post(&player3_finished);
-            sem_wait(&player3_is_in);
-            int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
-            read(fd2,&server.players[index].PID,sizeof(int));
-            close(fd2);
-
-            // <-- ROUND AFTER QUIT -->
-            sem_wait(&round_start);
-            send_map_data_to_player(index);
+        if(kill((pid_t)server.players[index].PID,0) != -1){
             read_player_move(index,&move);
-            move_player(&move,index);
+            if(move == 'q' || move == 'Q'){
+                server.players[index].want_to_quit = 1;
+                sem_post(&player3_finished);
+                sem_wait(&round_end);
+                sem_wait(&player3_is_in);
+                int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+                read(fd2,&server.players[index].PID,sizeof(int));
+                close(fd2);
+
+                // <-- ROUND AFTER QUIT -->
+                sem_wait(&round_start);
+                send_map_data_to_player(index);
+                read_player_move(index,&move);
+                move_player(&move,index);
+                if(server.players[index].on_bush == 1){
+                    move = 'b';
+                    flag = 1;
+                }
+                check_if_bush(index);
+                if(flag == 1 && move != -1){
+                    flag = 0;
+                    server.players[index].on_bush = 0;
+                    server.players[index].char_to_display = '#';
+                }
+                sem_post(&player3_finished);
+                sem_wait(&round_end);
+                send_map_data_to_player(index);
+                continue;
+                //<-- END OF ROUND -->
+            }
             if(server.players[index].on_bush == 1){
                 move = 'b';
                 flag = 1;
             }
+            move_player(&move,index);
             check_if_bush(index);
             if(flag == 1 && move != -1){
                 flag = 0;
@@ -434,29 +593,42 @@ void* manage_player3(void* arg){
             }
             sem_post(&player3_finished);
             sem_wait(&round_end);
+
+            //SEND MAP
             send_map_data_to_player(index);
-            continue;
-            //<-- END OF ROUND -->
         }
-        if(server.players[index].on_bush == 1){
-            move = 'b';
-            flag = 1;
-        }
-        move_player(&move,index);
-        check_if_bush(index);
-        if(flag == 1 && move != -1){
-            flag = 0;
-            server.players[index].on_bush = 0;
-            server.players[index].char_to_display = '#';
-        }
+        else{
+            if(errno == ESRCH){
+                move = 'q';
+            }
+            if(move == 'q' || move == 'Q'){
+                server.players[index].want_to_quit = 1;
+                sem_post(&player3_finished);
+                sem_wait(&round_end);
+                sem_wait(&player3_is_in);
+                int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+                read(fd2,&server.players[index].PID,sizeof(int));
+                close(fd2);
 
-        sem_post(&player3_finished);
-        sem_wait(&round_end);
-
-        //SEND MAP
-        if(kill((pid_t)server.players[index].PID,0) != -1){
-            if(errno != ESRCH){
+                // <-- ROUND AFTER QUIT -->
+                sem_wait(&round_start);
                 send_map_data_to_player(index);
+                read_player_move(index,&move);
+                move_player(&move,index);
+                if(server.players[index].on_bush == 1){
+                    move = 'b';
+                    flag = 1;
+                }
+                check_if_bush(index);
+                if(flag == 1 && move != -1){
+                    flag = 0;
+                    server.players[index].on_bush = 0;
+                    server.players[index].char_to_display = '#';
+                }
+                sem_post(&player3_finished);
+                sem_wait(&round_end);
+                send_map_data_to_player(index);
+                //<-- END OF ROUND -->
             }
         }
     }
@@ -479,33 +651,44 @@ void* manage_player4(void* arg){
     send_map_data_to_player(index);
     while(1){
         sem_wait(&round_start);
-       
         //MOVE PLAYER IF PROCESS IS NOT TERMINATED
-        if(kill((pid_t)server.players[index].PID,0) == -1){
-            if(errno == ESRCH){
-                move = 'q';
-            }
-        }
-        else{
-            read_player_move(3,&move);
-        }
-        if(move == 'q' || move == 'Q'){
-            clear_player_stats(3);
-            sem_post(&player4_finished);
-            sem_wait(&player4_is_in);
-            int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
-            read(fd2,&server.players[index].PID,sizeof(int));
-            close(fd2);
-
-            // <-- ROUND AFTER QUIT -->
-            sem_wait(&round_start);
-            send_map_data_to_player(index);
+        if(kill((pid_t)server.players[index].PID,0) != -1){
             read_player_move(index,&move);
-            move_player(&move,index);
+            if(move == 'q' || move == 'Q'){
+                server.players[index].want_to_quit = 1;
+                sem_post(&player4_finished);
+                sem_wait(&round_end);
+                sem_wait(&player4_is_in);
+                int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+                read(fd2,&server.players[index].PID,sizeof(int));
+                close(fd2);
+
+                // <-- ROUND AFTER QUIT -->
+                sem_wait(&round_start);
+                send_map_data_to_player(index);
+                read_player_move(index,&move);
+                move_player(&move,index);
+                if(server.players[index].on_bush == 1){
+                    move = 'b';
+                    flag = 1;
+                }
+                check_if_bush(index);
+                if(flag == 1 && move != -1){
+                    flag = 0;
+                    server.players[index].on_bush = 0;
+                    server.players[index].char_to_display = '#';
+                }
+                sem_post(&player4_finished);
+                sem_wait(&round_end);
+                send_map_data_to_player(index);
+                continue;
+                //<-- END OF ROUND -->
+            }
             if(server.players[index].on_bush == 1){
                 move = 'b';
                 flag = 1;
             }
+            move_player(&move,index);
             check_if_bush(index);
             if(flag == 1 && move != -1){
                 flag = 0;
@@ -514,29 +697,42 @@ void* manage_player4(void* arg){
             }
             sem_post(&player4_finished);
             sem_wait(&round_end);
+
+            //SEND MAP
             send_map_data_to_player(index);
-            continue;
-            //<-- END OF ROUND -->
         }
-        if(server.players[index].on_bush == 1){
-            move = 'b';
-            flag = 1;
-        }
-        move_player(&move,index);
-        check_if_bush(index);
-        if(flag == 1 && move != -1){
-            flag = 0;
-            server.players[index].on_bush = 0;
-            server.players[index].char_to_display = '#';
-        }
+        else{
+            if(errno == ESRCH){
+                move = 'q';
+            }
+            if(move == 'q' || move == 'Q'){
+                server.players[index].want_to_quit = 1;
+                sem_post(&player4_finished);
+                sem_wait(&round_end);
+                sem_wait(&player4_is_in);
+                int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
+                read(fd2,&server.players[index].PID,sizeof(int));
+                close(fd2);
 
-        sem_post(&player4_finished);
-        sem_wait(&round_end);
-
-        //SEND MAP
-        if(kill((pid_t)server.players[index].PID,0) != -1){
-            if(errno != ESRCH){
+                // <-- ROUND AFTER QUIT -->
+                sem_wait(&round_start);
                 send_map_data_to_player(index);
+                read_player_move(index,&move);
+                move_player(&move,index);
+                if(server.players[index].on_bush == 1){
+                    move = 'b';
+                    flag = 1;
+                }
+                check_if_bush(index);
+                if(flag == 1 && move != -1){
+                    flag = 0;
+                    server.players[index].on_bush = 0;
+                    server.players[index].char_to_display = '#';
+                }
+                sem_post(&player4_finished);
+                sem_wait(&round_end);
+                send_map_data_to_player(index);
+                //<-- END OF ROUND -->
             }
         }
     }
@@ -632,6 +828,9 @@ int send_map_data_to_player(int index){
 void move_player(int* move, int index){
     if(server.players[index].x == CAMP_X && server.players[index].y == CAMP_Y){
         server.players[index].char_to_display = 'A';
+    }
+    else if(isdigit(server.players[index].char_to_display)){
+        server.players[index].char_to_display = ' ';
     }
     switch(*move){
         case KEY_UP:

@@ -49,6 +49,12 @@ int main(){
         return 1;
     }
 
+    //INIT SEMAPHORES
+    if(init_semaphores()){
+        endwin();
+        return 1;
+    }
+
     //SET COLLECTIBLES
     set_collectibles(COINS_AMOUNT,TREASURES_AMOUNT,LARGE_TREASURES_AMOUNT);
     //SET CAMP
@@ -56,23 +62,22 @@ int main(){
     //SET BUSHES
     set_bushes();
 
-    //INIT SEMAPHORES
-    init_semaphores();
-
     //THREADS
     pthread_t beasts[MAX_BEAST_NUM];
     pthread_t players_wait;
     pthread_t players[MAX_PLAYER_NUM];
 
     int input;
+    int i = 0;
     int player_indexes[4] = {0,1,2,3};
     int beast_indexes[5] = {0,1,2,3,4};
 
     beast_init();
-    if(pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]) != 0){
+    if(pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[i]) != 0){
         server_shut_down();
         return 1;
     }
+    i++;
     if(pthread_create(&players_wait,NULL,wait_for_players,NULL) != 0){
         server_shut_down();
         return 1;
@@ -99,10 +104,11 @@ int main(){
         if(input == 'b' || input == 'B'){
             if(server.num_of_beasts < MAX_BEAST_NUM){
                 beast_init();
-                if(pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[server.num_of_beasts-1]) != 0){
+                if(pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[i]) != 0){
                     server_shut_down();
                     return 1;
                 }
+                i++;
             }
         }
         else if(input == 'c'){
@@ -116,6 +122,7 @@ int main(){
         }
         spawn_players_main();
         run_round();
+        remove_players_main();
         set_current_server_status_and_map();
 
     }while(input != 'q' && input != 'Q');

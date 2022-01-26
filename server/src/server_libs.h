@@ -52,6 +52,7 @@ struct player_t{
     char char_to_display;
     char on_bush;
     char wait_spawn;
+    char want_to_quit;
 };
 
 struct beast_t{

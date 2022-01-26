@@ -71,10 +71,6 @@ void make_a_move(int i){
         }while(flag);
     }
 
-    if(server.beasts[i].char_to_display == ('*' | COLOR_PAIR(BEAST_PAIR))){
-        server.beasts[i].char_to_display = ' ';
-    }
-
     switch(direction){
         //MOVE DOWN
         case 0:

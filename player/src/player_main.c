@@ -3,13 +3,16 @@
 struct player_t player;
 
 int main(){
-
     //CONNECT
-    if(connect_to_server()){
-        printf("Server is full.\nTry again later\n");
+    int ret = connect_to_server();
+    if(ret == 1){
+        printf("Server is shut down.\n");
         return 1;
     }
-
+    else if(ret == 2){
+        printf("Server is full.\nTry again later.\n");
+        return 2;
+    }
     initscr();
     halfdelay(7);
     noecho();
@@ -17,8 +20,9 @@ int main(){
     start_color();
     use_default_colors();
     
-    player.map = newwin(5,5,2,2);
-    player.stats = newwin(14,30,2,10);
+    player.map = newwin(9,9,2,2);
+    box(player.map,0,0);
+    player.stats = newwin(14,30,2,11);
     box(player.stats,0,0);
     keypad(player.map,1);
     refresh();
@@ -47,8 +51,6 @@ int main(){
         get_map_data();
         set_current_map_data();
     }while(1);
-
     endwin();
-    
     return 0;
 }

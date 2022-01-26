@@ -2,6 +2,9 @@
 
 int load_map(){
     FILE* f = fopen("map.txt","r");
+    if(!f){
+        return 1;
+    }
     while(1){
         char a = (char)fgetc(f);
         if(feof(f))
@@ -28,6 +31,7 @@ int start_server(){
         server.players[i].money_brought = 0;
         server.players[i].money_carried = 0;
         server.players[i].wait_spawn = 0;
+        server.players[i].want_to_quit = 0;
         strcpy(server.players[i].type,"-----");
         //DEATH POINTS
         server.death_points[i].x = -1;
@@ -210,8 +214,10 @@ void set_death_point(int index){
         mvwaddch(server.map,dp->y,dp->x,' ');
     }
     dp->money = server.players[index].money_carried;
-    dp->x = server.players[index].x;
-    dp->y = server.players[index].y;
+    if(server.players[index].x != 0 && server.players[index].y != 0){
+        dp->x = server.players[index].x;
+        dp->y = server.players[index].y;
+    }
 }
 
 void set_death_point_collission(int index1, int index2){
@@ -230,7 +236,7 @@ void set_death_point_collission(int index1, int index2){
     dp2->y = server.players[index2].y;
     dp2->money = server.players[index2].money_carried;
 
-    mvwaddch(server.map,server.players[index1].y,server.players[index1].x,'D' | COLOR_PAIR(TREASURE_PAIR));
+    mvwaddch(server.map,dp1->y,dp1->x,'D' | COLOR_PAIR(TREASURE_PAIR));
     server.players[index1].x = server.players[index1].spawn_x;
     server.players[index1].y = server.players[index1].spawn_y;
     server.players[index1].money_carried = 0;

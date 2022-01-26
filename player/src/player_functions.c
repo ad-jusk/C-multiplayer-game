@@ -4,11 +4,12 @@
 int connect_to_server(){
     int fd = open("../server/connection_fifo",O_RDONLY);
     if(fd == -1){
-        return 1;
+        if(errno != EEXIST)
+            return 1;
     }
     read(fd,&player.server_PID,sizeof(int));
     if(player.server_PID == 1){
-        return 1;
+        return 2;
     }
     read(fd,&player.index,sizeof(int));
     read(fd,player.fifo_to_write,sizeof(char)*28);
@@ -29,20 +30,20 @@ void get_map_data(){
         for(int j = 0;j<5;j++){
             read(fd,&temp,sizeof(char));
             if(temp == 'A'){
-                mvwaddch(player.map,i,j,temp | COLOR_PAIR(CAMP_PAIR));
+                mvwaddch(player.map,i+2,j+2,temp | COLOR_PAIR(CAMP_PAIR));
                 player.is_camp_discovered = 1;  
             }
             else if(isalpha(temp)){
-                mvwaddch(player.map,i,j,temp | COLOR_PAIR(TREASURE_PAIR)); 
+                mvwaddch(player.map,i+2,j+2,temp | COLOR_PAIR(TREASURE_PAIR)); 
             }
             else if(isdigit(temp)){
-                mvwaddch(player.map,i,j,temp | COLOR_PAIR(PLAYER_PAIR));
+                mvwaddch(player.map,i+2,j+2,temp | COLOR_PAIR(PLAYER_PAIR));
             }
             else if(temp == '*'){
-                mvwaddch(player.map,i,j,temp | COLOR_PAIR(BEAST_PAIR)); 
+                mvwaddch(player.map,i+2,j+2,temp | COLOR_PAIR(BEAST_PAIR)); 
             }
             else{
-                mvwaddch(player.map,i,j,temp); 
+                mvwaddch(player.map,i+2,j+2,temp); 
             }
         }
     }

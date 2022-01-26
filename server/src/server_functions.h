@@ -6,7 +6,7 @@
 
 //SERVER
 void server_shut_down();
-void init_semaphores();
+int init_semaphores();
 void run_round();
 void make_fifos();
 
@@ -24,5 +24,6 @@ int send_map_data_to_player(int index);
 void beast_kill_player();
 void set_player_fifos();
 void spawn_players_main();
+void remove_players_main();
 
 #endif
