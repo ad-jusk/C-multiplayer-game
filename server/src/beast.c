@@ -20,7 +20,7 @@ void* beast_move(void* index){
         sem_wait(&round_start);      // WAIT FOR ROUND TO START
         
         make_a_move(i);
-        beast_correct(i);
+        
         sem_post(&beast_finished);   // POST THAT BEAST HAS FINISHED ITS MOVE
         sem_wait(&round_end);        // WAIT FOR ROUND TO END
     }
@@ -134,6 +134,7 @@ void make_a_move(int i){
     else{
         server.beasts[i].char_to_display = ' ';
     }
+    beast_correct(i);
 }
 
 int search_for_player(int index, int* direction){

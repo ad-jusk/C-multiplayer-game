@@ -101,7 +101,7 @@ int init_semaphores(){
         return 1;
     }
     if(sem_init(&player4_finished,0,0) == -1){
-       sem_destroy(&player1_is_in);
+        sem_destroy(&player1_is_in);
         sem_destroy(&player2_is_in);
         sem_destroy(&player3_is_in);
         sem_destroy(&player4_is_in);
@@ -141,7 +141,7 @@ void run_round(){
         //WAIT FOR PLAYER 4 TO FINISH
         sem_wait(&player4_finished);
     }
-
+    
     //DO CODE REGRDING SINGLE ROUND HERE
     server.round++;
     collect_money();
@@ -829,7 +829,8 @@ void move_player(int* move, int index){
     if(server.players[index].x == CAMP_X && server.players[index].y == CAMP_Y){
         server.players[index].char_to_display = 'A';
     }
-    else if(isdigit(server.players[index].char_to_display)){
+    else if(server.players[index].char_to_display == ((index + '0') | COLOR_PAIR(PLAYER_PAIR)) || (server.players[index].x == server.players[index].spawn_x &&
+    server.players[index].y == server.players[index].spawn_y)){
         server.players[index].char_to_display = ' ';
     }
     switch(*move){
@@ -953,5 +954,26 @@ void make_fifos(){
             server_shut_down();
             exit(1);
         }
+    }
+}
+
+void player_correct(int index){
+    struct player_t* player = &server.players[index];
+    char x = index + '0';
+    char temp = mvwinch(server.map,player->y-1,player->x);
+    if(temp == (x | COLOR_PAIR(PLAYER_PAIR))){
+        mvwaddch(server.map,player->y-1,player->x,' ');
+    }
+    temp = mvwinch(server.map,player->y+1,player->x);
+    if(temp == (x | COLOR_PAIR(PLAYER_PAIR))){
+        mvwaddch(server.map,player->y+1,player->x,' ');
+    }
+    temp = mvwinch(server.map,player->y,player->x-1);
+    if(temp == (x | COLOR_PAIR(PLAYER_PAIR))){
+        mvwaddch(server.map,player->y,player->x-1,' ');
+    }
+    temp = mvwinch(server.map,player->y,player->x+1);
+    if(temp == (x | COLOR_PAIR(PLAYER_PAIR))){
+        mvwaddch(server.map,player->y,player->x+1,' ');
     }
 }

@@ -37,9 +37,7 @@ int main(){
     //GET AND SET SPAWN MAP
     get_map_data();
     set_current_map_data();
-
     int move;
-
     do{
         move = wgetch(player.map);
         if(move == 'q' || move == 'Q'){
