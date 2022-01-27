@@ -1,16 +1,16 @@
 #include "beast.h"
 
 
-void beast_init(){
+void beast_init(int i){
     int x, y;
     do{
         x = rand() % (MAP_WIDTH - 3) + 1;
         y = rand() % MAP_HEIGHT;
 
     }while(mvwinch(server.map,y,x) == (char)219 || (x == CAMP_X && y == CAMP_Y));
-    server.beasts[server.num_of_beasts].x = x;
-    server.beasts[server.num_of_beasts].y = y;
-    server.beasts[server.num_of_beasts].char_to_display = ' ';
+    server.beasts[i].x = x;
+    server.beasts[i].y = y;
+    server.beasts[i].char_to_display = ' ';
     server.num_of_beasts++;
 }
 
@@ -20,7 +20,7 @@ void* beast_move(void* index){
         sem_wait(&round_start);      // WAIT FOR ROUND TO START
         
         make_a_move(i);
-
+        beast_correct(i);
         sem_post(&beast_finished);   // POST THAT BEAST HAS FINISHED ITS MOVE
         sem_wait(&round_end);        // WAIT FOR ROUND TO END
     }
@@ -70,7 +70,7 @@ void make_a_move(int i){
 
         }while(flag);
     }
-
+    
     switch(direction){
         //MOVE DOWN
         case 0:
@@ -123,6 +123,8 @@ void make_a_move(int i){
                 mvwaddch(server.map,y,x,server.beasts[i].char_to_display);
             }
             server.beasts[i].x--;
+            break;
+        default:
             break;
     }
     char temp = mvwinch(server.map,server.beasts[i].y,server.beasts[i].x);
@@ -183,4 +185,24 @@ int search_for_player(int index, int* direction){
         }
     }
     return 1;
+}
+
+void beast_correct(int index){
+    struct beast_t* beast = &server.beasts[index];
+    char temp = mvwinch(server.map,beast->y-1,beast->x);
+    if(temp == ('*' | COLOR_PAIR(BEAST_PAIR))){
+        mvwaddch(server.map,beast->y-1,beast->x,' ');
+    }
+    temp = mvwinch(server.map,beast->y+1,beast->x);
+    if(temp == ('*' | COLOR_PAIR(BEAST_PAIR))){
+        mvwaddch(server.map,beast->y+1,beast->x,' ');
+    }
+    temp = mvwinch(server.map,beast->y,beast->x-1);
+    if(temp == ('*' | COLOR_PAIR(BEAST_PAIR))){
+        mvwaddch(server.map,beast->y,beast->x-1,' ');
+    }
+    temp = mvwinch(server.map,beast->y,beast->x+1);
+    if(temp == ('*' | COLOR_PAIR(BEAST_PAIR))){
+        mvwaddch(server.map,beast->y,beast->x+1,' ');
+    }
 }

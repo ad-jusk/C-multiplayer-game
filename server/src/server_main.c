@@ -10,11 +10,11 @@ sem_t player3_is_in;
 sem_t player4_is_in;
 sem_t round_start;
 sem_t round_end;
-sem_t beast_finished;
 sem_t player1_finished;
 sem_t player2_finished;
 sem_t player3_finished;
 sem_t player4_finished;
+sem_t beast_finished;
 
 int main(){
     
@@ -72,8 +72,8 @@ int main(){
     int player_indexes[4] = {0,1,2,3};
     int beast_indexes[5] = {0,1,2,3,4};
 
-    beast_init();
-    if(pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[i]) != 0){
+    beast_init(i);
+    if(pthread_create(&beasts[i],NULL,beast_move,&beast_indexes[i]) != 0){
         server_shut_down();
         return 1;
     }
@@ -102,9 +102,9 @@ int main(){
     do{
         input = wgetch(server.map);
         if(input == 'b' || input == 'B'){
-            if(server.num_of_beasts < MAX_BEAST_NUM){
-                beast_init();
-                if(pthread_create(&beasts[server.num_of_beasts-1],NULL,beast_move,&beast_indexes[i]) != 0){
+            if(i < MAX_BEAST_NUM){
+                beast_init(i);
+                if(pthread_create(&beasts[i],NULL,beast_move,&beast_indexes[i]) != 0){
                     server_shut_down();
                     return 1;
                 }

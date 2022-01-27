@@ -34,8 +34,8 @@ int start_server(){
         server.players[i].want_to_quit = 0;
         strcpy(server.players[i].type,"-----");
         //DEATH POINTS
-        server.death_points[i].x = -1;
-        server.death_points[i].y = -1;
+        server.death_points[i].x = 0;
+        server.death_points[i].y = 0;
         server.death_points[i].money = 0;
     }
     if(load_map()){
@@ -235,8 +235,9 @@ void set_death_point_collission(int index1, int index2){
     dp2->x = server.players[index2].x;
     dp2->y = server.players[index2].y;
     dp2->money = server.players[index2].money_carried;
-
-    mvwaddch(server.map,dp1->y,dp1->x,'D' | COLOR_PAIR(TREASURE_PAIR));
+    if(dp1->x != 0 && dp1->y != 0){
+        mvwaddch(server.map,dp1->y,dp1->x,'D' | COLOR_PAIR(TREASURE_PAIR));
+    }
     server.players[index1].x = server.players[index1].spawn_x;
     server.players[index1].y = server.players[index1].spawn_y;
     server.players[index1].money_carried = 0;
