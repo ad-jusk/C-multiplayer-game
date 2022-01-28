@@ -134,7 +134,6 @@ void make_a_move(int i){
     else{
         server.beasts[i].char_to_display = ' ';
     }
-    beast_correct(i);
 }
 
 int search_for_player(int index, int* direction){
@@ -186,24 +185,4 @@ int search_for_player(int index, int* direction){
         }
     }
     return 1;
-}
-
-void beast_correct(int index){
-    struct beast_t* beast = &server.beasts[index];
-    char temp = mvwinch(server.map,beast->y-1,beast->x);
-    if(temp == ('*' | COLOR_PAIR(BEAST_PAIR))){
-        mvwaddch(server.map,beast->y-1,beast->x,' ');
-    }
-    temp = mvwinch(server.map,beast->y+1,beast->x);
-    if(temp == ('*' | COLOR_PAIR(BEAST_PAIR))){
-        mvwaddch(server.map,beast->y+1,beast->x,' ');
-    }
-    temp = mvwinch(server.map,beast->y,beast->x-1);
-    if(temp == ('*' | COLOR_PAIR(BEAST_PAIR))){
-        mvwaddch(server.map,beast->y,beast->x-1,' ');
-    }
-    temp = mvwinch(server.map,beast->y,beast->x+1);
-    if(temp == ('*' | COLOR_PAIR(BEAST_PAIR))){
-        mvwaddch(server.map,beast->y,beast->x+1,' ');
-    }
 }

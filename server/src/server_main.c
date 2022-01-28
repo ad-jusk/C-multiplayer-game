@@ -72,16 +72,16 @@ int main(){
     int player_indexes[4] = {0,1,2,3};
     int beast_indexes[5] = {0,1,2,3,4};
 
+    if(pthread_create(&players_wait,NULL,wait_for_players,NULL) != 0){
+        server_shut_down();
+        return 1;
+    }
     beast_init(i);
     if(pthread_create(&beasts[i],NULL,beast_move,&beast_indexes[i]) != 0){
         server_shut_down();
         return 1;
     }
     i++;
-    if(pthread_create(&players_wait,NULL,wait_for_players,NULL) != 0){
-        server_shut_down();
-        return 1;
-    }
     if(pthread_create(&players[0],NULL,manage_player1,&player_indexes[0]) != 0){
         server_shut_down();
         return 1;

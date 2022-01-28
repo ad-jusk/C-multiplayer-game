@@ -956,24 +956,3 @@ void make_fifos(){
         }
     }
 }
-
-void player_correct(int index){
-    struct player_t* player = &server.players[index];
-    char x = index + '0';
-    char temp = mvwinch(server.map,player->y-1,player->x);
-    if(temp == (x | COLOR_PAIR(PLAYER_PAIR))){
-        mvwaddch(server.map,player->y-1,player->x,' ');
-    }
-    temp = mvwinch(server.map,player->y+1,player->x);
-    if(temp == (x | COLOR_PAIR(PLAYER_PAIR))){
-        mvwaddch(server.map,player->y+1,player->x,' ');
-    }
-    temp = mvwinch(server.map,player->y,player->x-1);
-    if(temp == (x | COLOR_PAIR(PLAYER_PAIR))){
-        mvwaddch(server.map,player->y,player->x-1,' ');
-    }
-    temp = mvwinch(server.map,player->y,player->x+1);
-    if(temp == (x | COLOR_PAIR(PLAYER_PAIR))){
-        mvwaddch(server.map,player->y,player->x+1,' ');
-    }
-}

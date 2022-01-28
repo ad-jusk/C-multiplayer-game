@@ -100,17 +100,63 @@ void fill_command_window(){
     wrefresh(server.commands);
 }
 
+void player_correct(int index, char x){
+    struct player_t* player = &server.players[index];
+    char temp = mvwinch(server.map,player->y-1,player->x);
+    if(temp == x){
+        mvwaddch(server.map,player->y-1,player->x,' ');
+    }
+    temp = mvwinch(server.map,player->y+1,player->x);
+    if(temp == x){
+        mvwaddch(server.map,player->y+1,player->x,' ');
+    }
+    temp = mvwinch(server.map,player->y,player->x-1);
+    if(temp == x){
+        mvwaddch(server.map,player->y,player->x-1,' ');
+    }
+    temp = mvwinch(server.map,player->y,player->x+1);
+    if(temp == x){
+        mvwaddch(server.map,player->y,player->x+1,' ');
+    }
+}
+
 void display_players(){
+    char x;
     for(int i = 0;i<MAX_PLAYER_NUM;i++){
         if(server.players[i].x != 0 && server.players[i].y != 0){
             mvwaddch(server.map,server.players[i].y,server.players[i].x,((i+1) + '0')  | COLOR_PAIR(PLAYER_PAIR));
+            x = mvwinch(server.map,server.players[i].y,server.players[i].x);
+            player_correct(i,x);
         }
     }
 }
 
+void beast_correct(int index, char x){
+    struct beast_t* beast = &server.beasts[index];
+    char temp = mvwinch(server.map,beast->y-1,beast->x);
+    if(temp == x){
+        mvwaddch(server.map,beast->y-1,beast->x,' ');
+    }
+    temp = mvwinch(server.map,beast->y+1,beast->x);
+    if(temp == x){
+        mvwaddch(server.map,beast->y+1,beast->x,' ');
+    }
+    temp = mvwinch(server.map,beast->y,beast->x-1);
+    if(temp == x){
+        mvwaddch(server.map,beast->y,beast->x-1,' ');
+    }
+    temp = mvwinch(server.map,beast->y,beast->x+1);
+    if(temp == x){
+        mvwaddch(server.map,beast->y,beast->x+1,' ');
+    }
+}
+
 void display_beasts(){
+    char x;
     for(int i = 0;i<server.num_of_beasts;i++){
         mvwaddch(server.map,server.beasts[i].y,server.beasts[i].x,'*' | COLOR_PAIR(BEAST_PAIR));
+        x = mvwinch(server.map,server.beasts[i].y,server.beasts[i].x);
+        beast_correct(i,x);
     }
 }
 

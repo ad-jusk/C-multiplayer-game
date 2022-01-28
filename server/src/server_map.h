@@ -13,6 +13,7 @@ void set_collectibles(int num_of_coins, int num_of_treasures, int num_of_large_t
 void set_current_server_status_and_map();
 void fill_command_window();
 void set_legend();
+void beast_correct(int index, char x);
 
 //ROUND
 void display_players();
@@ -24,5 +25,6 @@ void check_if_collission();
 void set_death_point(int index);
 void set_death_point_collission(int index1, int index2);
 void pick_up_loot(int index);
+void player_correct(int index, char x);
 
 #endif
