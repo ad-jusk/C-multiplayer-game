@@ -58,6 +58,6 @@ int main(){
         set_current_map_data();
     }while(1);
     endwin();
-    sem_unlink("player");
+    
     return 0;
 }
