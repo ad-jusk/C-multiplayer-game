@@ -13,6 +13,7 @@ void server_shut_down(){
     sem_destroy(&player2_finished);
     sem_destroy(&player3_finished);
     sem_destroy(&player4_finished);
+    sem_unlink("player");
     remove("connection_fifo");
     remove("info_for_pla1_fifo");
     remove("player1_moves_fifo");
@@ -112,6 +113,21 @@ int init_semaphores(){
         sem_destroy(&player2_finished);
         sem_destroy(&player3_finished);
         return 1; 
+    }
+    player_sem = sem_open("player",O_CREAT | O_RDWR,S_IWUSR | S_IRUSR,0);
+    if(player_sem == SEM_FAILED){
+        sem_destroy(&player1_is_in);
+        sem_destroy(&player2_is_in);
+        sem_destroy(&player3_is_in);
+        sem_destroy(&player4_is_in);
+        sem_destroy(&round_start);
+        sem_destroy(&round_end);
+        sem_destroy(&beast_finished);
+        sem_destroy(&player1_finished);
+        sem_destroy(&player2_finished);
+        sem_destroy(&player3_finished);
+        sem_destroy(&player4_finished);
+        return 1;
     }
     return 0;
 }
@@ -245,8 +261,8 @@ void clear_player_stats(int index){
 
 void beast_kill_player(){
     for(int i = 0;i<server.num_of_beasts;i++){
-        for(int j = 0;j<server.num_of_players;j++){
-            if(server.beasts[i].x == server.players[j].x && server.beasts[i].y == server.players[j].y){
+        for(int j = 0;j<MAX_PLAYER_NUM;j++){
+            if(server.beasts[i].x == server.players[j].x && server.beasts[i].y == server.players[j].y && server.beasts[i].x != CAMP_X && server.beasts[i].y != CAMP_Y){
                 set_death_point(j);
                 server.players[j].x = server.players[j].spawn_x;
                 server.players[j].y = server.players[j].spawn_y;
@@ -286,6 +302,8 @@ void* wait_for_players(void* arg){
     make_fifos();
     set_player_fifos();
     while(1){
+        sem_wait(player_sem);
+        if(server.quit) return NULL;
         int fd = open("connection_fifo", O_WRONLY);
         index = server.num_of_players + 1;
         if(server.players[0].is_in == 0){
@@ -320,7 +338,7 @@ void* wait_for_players(void* arg){
             write(fd,&error,sizeof(int));
         }
         close(fd);
-        sleep(1);
+        //sleep(1);
     }
 
     return NULL;
@@ -329,6 +347,7 @@ void* wait_for_players(void* arg){
 
 void* manage_player1(void* arg){
     sem_wait(&player1_is_in);
+    if(server.quit) return NULL;
     int index = *(int*)arg;
     int fd = open(server.players[index].fifo_to_read,O_RDONLY);
     //GET PLAYER'S PID FIRST
@@ -349,6 +368,7 @@ void* manage_player1(void* arg){
                 sem_post(&player1_finished);
                 sem_wait(&round_end);
                 sem_wait(&player1_is_in);
+                if(server.quit) return NULL;
                 int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
                 read(fd2,&server.players[index].PID,sizeof(int));
                 close(fd2);
@@ -399,6 +419,7 @@ void* manage_player1(void* arg){
                 sem_post(&player1_finished);
                 sem_wait(&round_end);
                 sem_wait(&player1_is_in);
+                if(server.quit) return NULL;
                 int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
                 read(fd2,&server.players[index].PID,sizeof(int));
                 close(fd2);
@@ -430,6 +451,7 @@ void* manage_player1(void* arg){
 
 void* manage_player2(void* arg){
     sem_wait(&player2_is_in);
+    if(server.quit) return NULL;
     int index = *(int*)arg;
     int fd = open(server.players[index].fifo_to_read,O_RDONLY);
 
@@ -451,6 +473,7 @@ void* manage_player2(void* arg){
                 sem_post(&player2_finished);
                 sem_wait(&round_end);
                 sem_wait(&player2_is_in);
+                if(server.quit) return NULL;
                 int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
                 read(fd2,&server.players[index].PID,sizeof(int));
                 close(fd2);
@@ -502,6 +525,7 @@ void* manage_player2(void* arg){
                 sem_post(&player2_finished);
                 sem_wait(&round_end);
                 sem_wait(&player2_is_in);
+                if(server.quit) return NULL;
                 int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
                 read(fd2,&server.players[index].PID,sizeof(int));
                 close(fd2);
@@ -534,6 +558,7 @@ void* manage_player2(void* arg){
 
 void* manage_player3(void* arg){
     sem_wait(&player3_is_in);
+    if(server.quit) return NULL;
     int index = *(int*)arg;
     int fd = open(server.players[index].fifo_to_read,O_RDONLY);
 
@@ -555,6 +580,7 @@ void* manage_player3(void* arg){
                 sem_post(&player3_finished);
                 sem_wait(&round_end);
                 sem_wait(&player3_is_in);
+                if(server.quit) return NULL;
                 int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
                 read(fd2,&server.players[index].PID,sizeof(int));
                 close(fd2);
@@ -606,6 +632,7 @@ void* manage_player3(void* arg){
                 sem_post(&player3_finished);
                 sem_wait(&round_end);
                 sem_wait(&player3_is_in);
+                if(server.quit) return NULL;
                 int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
                 read(fd2,&server.players[index].PID,sizeof(int));
                 close(fd2);
@@ -638,6 +665,7 @@ void* manage_player3(void* arg){
 
 void* manage_player4(void* arg){
     sem_wait(&player4_is_in);
+    if(server.quit) return NULL;
     int index = *(int*)arg;
     int fd = open(server.players[index].fifo_to_read,O_RDONLY);
 
@@ -659,6 +687,7 @@ void* manage_player4(void* arg){
                 sem_post(&player4_finished);
                 sem_wait(&round_end);
                 sem_wait(&player4_is_in);
+                if(server.quit) return NULL;
                 int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
                 read(fd2,&server.players[index].PID,sizeof(int));
                 close(fd2);
@@ -710,6 +739,7 @@ void* manage_player4(void* arg){
                 sem_post(&player4_finished);
                 sem_wait(&round_end);
                 sem_wait(&player4_is_in);
+                if(server.quit) return NULL;
                 int fd2 = open(server.players[index].fifo_to_read,O_RDONLY);
                 read(fd2,&server.players[index].PID,sizeof(int));
                 close(fd2);

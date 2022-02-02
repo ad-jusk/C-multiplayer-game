@@ -13,9 +13,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
-
+#include <semaphore.h>
 #define CAMP_X 24
 #define CAMP_Y 12
+
 
 #define BEAST_PAIR 1
 #define PLAYER_PAIR 2
@@ -27,8 +28,6 @@ struct player_t{
     int y;
     int index;
     int server_PID;
-    int camp_pos_x;
-    int camp_pos_y;
     int deaths;
     int round;
     int money_carried;
@@ -48,5 +47,5 @@ void set_current_map_data();
 void init_colors();
 
 extern struct player_t player;
-
+extern sem_t* player_sem;
 #endif

@@ -22,6 +22,7 @@ int start_server(){
     server.num_of_players = 0;
     server.PID = (int)getpid();
     server.round = 0;
+    server.quit = 0;
     for(int i = 0;i<MAX_PLAYER_NUM;i++){
         server.players[i].deaths = 0;
         server.players[i].x = 0;
@@ -54,7 +55,7 @@ void init_colors(){
 
 void set_current_server_status_and_map(){
     mvwprintw(server.status,1,1,"Server's PID: %d",server.PID);
-    mvwprintw(server.status,2,1,"Camp pos: %d/%d",CAMP_X,CAMP_Y);
+    mvwprintw(server.status,2,1,"Camp pos: %d/%d",CAMP_Y,CAMP_X);
     mvwprintw(server.status,3,1,"Round: %d",server.round);
 
     mvwprintw(server.status,5,1,"Players:");

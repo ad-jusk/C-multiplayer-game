@@ -1,8 +1,16 @@
 #include "player_libs.h"
 
 struct player_t player;
+sem_t* player_sem;
 
 int main(){
+    //OPEN SEM
+    player_sem = sem_open("player",O_CREAT | O_RDWR,S_IWUSR | S_IRUSR,0);
+    if(player_sem == SEM_FAILED){
+        printf("Failed to open semaphore\n");
+        return 1;
+    }
+    sem_post(player_sem);
     //CONNECT
     int ret = connect_to_server();
     if(ret == 1){
@@ -50,5 +58,6 @@ int main(){
         set_current_map_data();
     }while(1);
     endwin();
+    sem_unlink("player");
     return 0;
 }

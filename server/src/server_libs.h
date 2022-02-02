@@ -75,6 +75,7 @@ struct server_t{
     struct player_t players[MAX_PLAYER_NUM];
     struct beast_t beasts[MAX_BEAST_NUM];
     struct death_point_t death_points[MAX_PLAYER_NUM];
+    char quit;
     WINDOW* map;
     WINDOW* status;
     WINDOW* commands;
@@ -93,6 +94,6 @@ extern sem_t player2_finished;
 extern sem_t player3_finished;
 extern sem_t player4_finished;
 extern sem_t beast_finished;
-
+extern sem_t* player_sem;
 
 #endif

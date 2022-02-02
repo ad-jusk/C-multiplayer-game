@@ -15,6 +15,7 @@ sem_t player2_finished;
 sem_t player3_finished;
 sem_t player4_finished;
 sem_t beast_finished;
+sem_t* player_sem;
 
 int main(){
     
@@ -70,8 +71,10 @@ int main(){
     int input;
     int i = 0;
     int player_indexes[4] = {0,1,2,3};
-    int beast_indexes[5] = {0,1,2,3,4};
-
+    int beast_indexes[MAX_BEAST_NUM];
+    for(int i = 0;i<MAX_BEAST_NUM;i++){
+        beast_indexes[i] = i;
+    }
     if(pthread_create(&players_wait,NULL,wait_for_players,NULL) != 0){
         server_shut_down();
         return 1;
@@ -127,6 +130,24 @@ int main(){
 
     }while(input != 'q' && input != 'Q');
 
+    server.quit = 1;
+    if(server.num_of_players == 0){
+        sem_post(&player1_is_in);
+        sem_post(&player2_is_in);
+        sem_post(&player3_is_in);
+        sem_post(&player4_is_in);
+        sem_post(player_sem);
+        for(int i = 0 ;i<MAX_PLAYER_NUM;i++){
+            pthread_join(players[i],NULL);
+        }
+        for(int i = 0;i<server.num_of_beasts;i++){
+            sem_post(&round_start);
+        }
+        for(int i = 0;i<server.num_of_beasts;i++){
+            pthread_join(beasts[i],NULL);
+        }
+        pthread_join(players_wait,NULL);
+    }
     server_shut_down();
 
     return 0;
