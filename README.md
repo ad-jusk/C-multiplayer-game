@@ -24,11 +24,12 @@ There are 3 types of collectibles:
 - c (1 coin)
 - t (10 coins)
 - T (50 coins)
-- D (dropped treasure, amount is equal to coins carried by a player upon death)
+- D (dropped treasure, amount is equal to coins carried by a player upon death)  
+
 However, the coins can be lost if:
 - player is killed by a beast
-- player has a collision with another player
-Each collected treasure must be brought to the camp in the center of the map.  
+- player has a collision with another player  
+Each collected treasure must be brought to the camp in the center of the map. After that, it can't be lost.   
 Players move using the ```W S A D``` keys.
 
 ## Screenshots :camera:
