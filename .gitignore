@@ -1,0 +1,9 @@
+#directories
+obj/
+.vscode
+
+#object files
+*.o
+
+#executable files
+*.exe
